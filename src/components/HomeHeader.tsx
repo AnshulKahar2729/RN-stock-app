@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Searchbar } from './common/Searchbar';
+// import { useStockSearch } from '../hooks/useStock';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export const HomeHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  // const { isLoading } = useStockSearch(searchQuery);
 
   return (
     <View style={styles.header}>
@@ -13,13 +17,21 @@ export const HomeHeader = () => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search..."
-            placeholderTextColor="#8E8E93"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={styles.searchInput}
-          />
+          <View style={styles.searchBox}>
+            <Icon
+              name="search"
+              size={18}
+              color="#8E8E93"
+              style={styles.searchIcon}
+            />
+            <Searchbar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              placeholder="Search..."
+              placeholderTextColor="#8E8E93"
+              style={styles.searchInput}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -54,16 +66,30 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  searchInput: {
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f8f8f8',
     borderRadius: 8,
-    padding:8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    width: '100%',
   },
   searchIcon: {
-    position: 'absolute',
-    left: 12,
-    top: 12,
-    zIndex: 1,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+  },
+  loadingText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#999',
   },
 });

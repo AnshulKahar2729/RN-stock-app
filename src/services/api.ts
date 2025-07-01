@@ -1,4 +1,4 @@
-import { TopGainers, TopLosers } from '../types';
+import { TopStock } from '../types/stock';
 import { config } from '../utils/config';
 import axios from 'axios';
 import { getCache, setCache } from './cache';
@@ -6,9 +6,9 @@ import { getCache, setCache } from './cache';
 const cacheDuration = 60 * 60 * 24; // 1 day
 const { API_KEY, BASE_URL } = config;
 
-export async function fetchTopGainers(): Promise<TopGainers[]> {
+export async function fetchTopGainers(): Promise<TopStock[]> {
   const cacheKey = 'top_gainers';
-  const cached = await getCache<TopGainers[]>(cacheKey, cacheDuration);
+  const cached = await getCache<TopStock[]>(cacheKey, cacheDuration);
   console.log({ cached });
   if (cached) return cached;
 
@@ -19,7 +19,7 @@ export async function fetchTopGainers(): Promise<TopGainers[]> {
   console.log({ data });
 
   // Map data to Stock[]
-  const stocks: TopGainers[] = data.top_gainers.map((stock: any) => ({
+  const stocks: TopStock[] = data.top_gainers.map((stock: any) => ({
     change_amount: stock.change_amount,
     change_percentage: stock.change_percentage,
     price: stock.price,
@@ -30,9 +30,9 @@ export async function fetchTopGainers(): Promise<TopGainers[]> {
   return stocks;
 }
 
-export async function fetchTopLosers(): Promise<TopLosers[]> {
+export async function fetchTopLosers(): Promise<TopStock[]> {
   const cacheKey = 'top_losers';
-  const cached = await getCache<TopLosers[]>(cacheKey, cacheDuration);
+  const cached = await getCache<TopStock[]>(cacheKey, cacheDuration);
   if (cached) return cached;
 
   const { data } = await axios.get(
@@ -40,7 +40,7 @@ export async function fetchTopLosers(): Promise<TopLosers[]> {
   );
 
   // Map data to Stock[]
-  const stocks: TopLosers[] = data.top_losers.map((stock: any) => ({
+  const stocks: TopStock[] = data.top_losers.map((stock: any) => ({
     change_amount: stock.change_amount,
     change_percentage: stock.change_percentage,
     price: stock.price,

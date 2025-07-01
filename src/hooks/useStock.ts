@@ -79,3 +79,35 @@ export const useStockOverview = (ticker: string) => {
     enabled: !!ticker,
   });
 };
+
+export type StockSearch = {
+  symbol: string;
+  name: string;
+  type: string;
+  region: string;
+  marketOpen: string;
+  marketClose: string;
+  timezone: string;
+  currency: string;
+  matchScore: string;
+};
+
+const fetchStockSearch = async (query: string): Promise<StockSearch[]> => {
+  const response = await axios.get(
+    `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${query}&apikey=${config.API_KEY}`,
+  );
+
+  if (!response.data || Object.keys(response.data).length === 0) {
+    throw new Error('No data found for stock search');
+  }
+
+  return response.data.bestMatches;
+};
+
+export const useStockSearch = (query: string) => {
+  return useQuery({
+    queryKey: ['stock-search', query],
+    queryFn: () => fetchStockSearch(query),
+    enabled: !!query,
+  });
+};

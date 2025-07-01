@@ -6,6 +6,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -65,7 +66,11 @@ const ProductScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.ticker}>{ticker}</Text>
-          <Text style={styles.companyName}>{overview?.Name}</Text>
+
+          {/* Book mark icon */}
+          <TouchableOpacity style={styles.bookmarkIcon}>
+            <Icon name="bookmark-outline" size={24} color="#111827" />
+          </TouchableOpacity>
         </View>
 
         {/* Chart Placeholder - Commented out as requested */}
@@ -211,12 +216,13 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+    padding: 14,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   ticker: {
     fontSize: 28,
@@ -288,6 +294,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#4B5563',
     marginTop: 8,
+  },
+  bookmarkIcon: {
+    padding: 10,
   },
 });
 

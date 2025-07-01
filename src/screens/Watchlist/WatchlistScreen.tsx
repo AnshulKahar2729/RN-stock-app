@@ -4,7 +4,7 @@ import { RouteProp } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { Watchlist } from '../../types';
 import { useWatchlist } from '../../context/WatchlistContext';
-import StockCard from '../../components/StockCard';
+import StockCard from '../../components/TopStockCard';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function WatchlistScreen() {

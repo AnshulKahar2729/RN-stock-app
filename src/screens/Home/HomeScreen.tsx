@@ -11,14 +11,14 @@ import {
   StatusBar,
 } from 'react-native';
 import { fetchTopGainers, fetchTopLosers } from '../../services/api';
-import StockCard from '../../components/StockCard';
-import { TopGainers, TopLosers } from '../../types';
+import TopStockCard from '../../components/TopStockCard';
+import { TopStock } from '../../types/stock';
 import { EmptyStockGrid } from '../../components/EmptyStockGrid';
 import { HomeHeader } from '../../components/HomeHeader';
 
 const HomeScreen = ({ navigation }: any) => {
-  const [gainers, setGainers] = useState<TopGainers[]>([]);
-  const [losers, setLosers] = useState<TopLosers[]>([]);
+  const [gainers, setGainers] = useState<TopStock[]>([]);
+  const [losers, setLosers] = useState<TopStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,12 +62,8 @@ const HomeScreen = ({ navigation }: any) => {
   const displayedLosers = useMemo(() => losers.slice(0, 4), [losers]);
 
   // Memoized navigation handlers
-  const navigateToGainersViewAll = useCallback(() => {
-    navigation?.navigate?.('ViewAll', { type: 'gainers' });
-  }, [navigation]);
-
-  const navigateToLosersViewAll = useCallback(() => {
-    navigation?.navigate?.('ViewAll', { type: 'losers' });
+  const navigateToViewAll = useCallback((type: 'gainers' | 'losers') => {
+    navigation?.navigate?.('ViewAll', { type });
   }, [navigation]);
 
   const getItemLayout = useCallback(
@@ -110,7 +106,7 @@ const HomeScreen = ({ navigation }: any) => {
               <Text style={styles.sectionTitle}>Top Gainers</Text>
             </View>
             <TouchableOpacity
-              onPress={navigateToGainersViewAll}
+              onPress={() => navigateToViewAll('gainers')}
               style={styles.viewAllButton}
             >
               <Text style={styles.viewAllText}>View All</Text>
@@ -123,7 +119,7 @@ const HomeScreen = ({ navigation }: any) => {
               numColumns={2}
               renderItem={({ item }) => (
                 <View style={styles.cardContainer}>
-                  <StockCard stock={item} />
+                  <TopStockCard stock={item} />
                 </View>
               )}
               keyExtractor={item => `gainer-${item.ticker}`}
@@ -152,7 +148,7 @@ const HomeScreen = ({ navigation }: any) => {
               <Text style={styles.sectionTitle}>Top Losers</Text>
             </View>
             <TouchableOpacity
-              onPress={navigateToLosersViewAll}
+              onPress={() => navigateToViewAll('losers')}
               style={styles.viewAllButton}
             >
               <Text style={styles.viewAllText}>View All</Text>
@@ -165,7 +161,7 @@ const HomeScreen = ({ navigation }: any) => {
               numColumns={2}
               renderItem={({ item }) => (
                 <View style={styles.cardContainer}>
-                  <StockCard stock={item} />
+                  <TopStockCard stock={item} />
                 </View>
               )}
               keyExtractor={item => `loser-${item.ticker}`}
@@ -194,7 +190,7 @@ const HomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
@@ -312,14 +308,15 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   section: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 10,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 22,
