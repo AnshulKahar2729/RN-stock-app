@@ -1,313 +1,274 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity, StatusBar } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { Watchlist } from '../../types';
 import { useWatchlist } from '../../context/WatchlistContext';
 import StockCard from '../../components/StockCard';
-import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const WatchlistScreen = () => {
-  const { watchlists, addWatchlist, removeStockFromWatchlist, removeWatchlist } = useWatchlist();
-  const navigation = useNavigation<any>();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newWatchlistName, setNewWatchlistName] = useState('');
+export default function WatchlistScreen() {
+  const { watchlists } = useWatchlist();
+  const route =
+    useRoute<RouteProp<{ params: { title: string; id: string } }, 'params'>>();
+  const { title, id } = route.params;
+  const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
 
-  const handleCreateWatchlist = () => {
-    if (newWatchlistName.trim()) {
-      addWatchlist(newWatchlistName.trim());
-      setNewWatchlistName('');
-      setShowCreateForm(false);
-    } else {
-      Alert.alert('Error', 'Please enter a watchlist name');
+  useEffect(() => {
+    const selectedWatchlist = watchlists.find(w => w.id === id);
+    if (selectedWatchlist) {
+      setWatchlist(selectedWatchlist);
     }
-  };
+  }, [id, watchlists]);
 
-  const handleRemoveStock = (watchlistId: string, ticker: string) => {
-    Alert.alert(
-      'Remove Stock',
-      `Remove ${ticker} from this watchlist?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
-          style: 'destructive',
-          onPress: () => removeStockFromWatchlist(watchlistId, ticker)
-        }
-      ]
-    );
-  };
-
-  const handleDeleteWatchlist = (watchlistId: string, watchlistName: string) => {
-    Alert.alert(
-      'Delete Watchlist',
-      `Are you sure you want to delete "${watchlistName}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => removeWatchlist(watchlistId)
-        }
-      ]
-    );
-  };
-
-  const renderWatchlist = ({ item }: { item: any }) => (
-    <View style={styles.watchlistContainer}>
-      <View style={styles.watchlistHeader}>
-        <View style={styles.watchlistHeaderLeft}>
-          <Text style={styles.watchlistName}>{item.name}</Text>
-          <Text style={styles.stockCount}>{item.stocks.length} stocks</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.deleteWatchlistButton}
-          onPress={() => handleDeleteWatchlist(item.id, item.name)}
-        >
-          <Text style={styles.deleteWatchlistButtonText}>🗑️</Text>
-        </TouchableOpacity>
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <Icon name="trending-up" size={48} color="#94A3B8" />
       </View>
-      
-      {item.stocks.length > 0 ? (
-        <FlatList
-          data={item.stocks}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item: stock }) => (
-            <View style={styles.stockContainer}>
-              <StockCard 
-                stock={stock} 
-                onPress={() => navigation.navigate('Product', { stock })}
-              />
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => handleRemoveStock(item.id, stock.ticker)}
-              >
-                <Text style={styles.removeButtonText}>×</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          keyExtractor={(stock) => stock.ticker}
-          contentContainerStyle={styles.stocksList}
-        />
-      ) : (
-        <View style={styles.emptyWatchlist}>
-          <Text style={styles.emptyText}>No stocks in this watchlist</Text>
-          <Text style={styles.emptySubtext}>Add stocks from the Home screen</Text>
-        </View>
-      )}
+      <Text style={styles.emptyTitle}>No stocks yet</Text>
+      <Text style={styles.emptySubtitle}>
+        Add stocks to your watchlist to track their performance
+      </Text>
+      <TouchableOpacity style={styles.addFirstStockButton}>
+        <Icon name="add" size={20} color="white" />
+        <Text style={styles.addFirstStockText}>Add Your First Stock</Text>
+      </TouchableOpacity>
     </View>
   );
 
-  if (watchlists.length === 0 && !showCreateForm) {
+  const renderStockList = () => (
+    <FlatList
+      data={watchlist?.stocks}
+      renderItem={({ item }) => <StockCard stock={item} />}
+      keyExtractor={item => item.ticker}
+      numColumns={2}
+      columnWrapperStyle={styles.stockListColumn}
+      contentContainerStyle={styles.stockListContent}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={renderEmptyState}
+    />
+  );
+
+  if (!watchlist) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No watchlists yet</Text>
-        <Text style={styles.emptySubtitle}>Create your first watchlist to get started!</Text>
-        <Button 
-          title="Create Watchlist" 
-          onPress={() => setShowCreateForm(true)}
-        />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <View style={styles.notFoundContainer}>
+          <Icon name="error-outline" size={64} color="#EF4444" />
+          <Text style={styles.notFoundTitle}>Watchlist Not Found</Text>
+          <Text style={styles.notFoundSubtitle}>
+            The watchlist you're looking for doesn't exist
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {showCreateForm && (
-        <View style={styles.createForm}>
-          <Text style={styles.createFormTitle}>Create New Watchlist</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter watchlist name"
-            value={newWatchlistName}
-            onChangeText={setNewWatchlistName}
-            autoFocus
-          />
-          <View style={styles.buttonRow}>
-            <Button 
-              title="Cancel" 
-              onPress={() => {
-                setShowCreateForm(false);
-                setNewWatchlistName('');
-              }}
-              color="red"
-            />
-            <Button 
-              title="Create" 
-              onPress={handleCreateWatchlist}
-            />
-          </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <Header title={title} stockCount={watchlist.stocks?.length || 0} />
+      
+      <View style={styles.content}>
+        {/* Stock List */}
+        <View style={styles.stockList}>
+          {renderStockList()}
         </View>
-      )}
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Watchlists</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => setShowCreateForm(true)}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
       </View>
-
-      <FlatList
-        data={watchlists}
-        renderItem={renderWatchlist}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.watchlistsList}
-      />
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   header: {
+    backgroundColor: 'white',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  createForm: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  createFormTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  buttonRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-  },
-  watchlistsList: {
-    padding: 16,
-  },
-  watchlistContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 16,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  watchlistHeader: {
+  headerLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  watchlistHeaderLeft: {
     flex: 1,
   },
-  watchlistName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginLeft: 12,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
   },
   stockCount: {
     fontSize: 14,
-    color: '#666',
+    color: '#64748B',
+    fontWeight: '500',
   },
-  deleteWatchlistButton: {
-    padding: 8,
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
   },
-  deleteWatchlistButtonText: {
-    fontSize: 18,
-  },
-  stocksList: {
-    paddingRight: 16,
-  },
-  stockContainer: {
-    position: 'relative',
-    marginRight: 8,
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+  addStockButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
   },
-  removeButtonText: {
-    color: 'white',
+  addStockText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#3B82F6',
+    marginLeft: 8,
   },
-  emptyWatchlist: {
+  sortButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  emptyText: {
+  sortText: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
+    fontWeight: '500',
+    color: '#64748B',
+    marginLeft: 6,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
+  stockList: {
+    flex: 1,
+  },
+  stockListContent: {
+    paddingBottom: 20,
+  },
+  stockListColumn: {
+    justifyContent: 'space-between',
+    gap: 12,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 80,
+  },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#1E293B',
     marginBottom: 8,
-    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
+    color: '#64748B',
     textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  addFirstStockButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3B82F6',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  addFirstStockText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    marginLeft: 8,
+  },
+  notFoundContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  notFoundTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  notFoundSubtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
 
-export default WatchlistScreen;
+function Header({ title, stockCount }: { title: string; stockCount: number }) {
+  const navigation = useNavigation<any>();
+  
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={{ padding: 4 }} // Increase touch target
+        >
+          <Icon name="arrow-back" size={24} color="#1E293B" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{title}</Text>
+      </View>
+      
+      <View style={styles.headerRight}>
+        <Text style={styles.stockCount}>
+          {stockCount} {stockCount === 1 ? 'stock' : 'stocks'}
+        </Text>
+      </View>
+    </View>
+  );
+}
