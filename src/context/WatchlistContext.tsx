@@ -1,20 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { TopGainers, TopLosers, Watchlist } from '../types';
+import { TopStock, Watchlist } from '../types/stock';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 const WATCHLISTS_STORAGE_KEY = 'WATCHLISTS_STORAGE_KEY';
 
 interface WatchlistContextProps {
   watchlists: Watchlist[];
   addWatchlist: (name: string) => string;
-  addStockToWatchlist: (watchlistId: string, stock: TopGainers | TopLosers) => void;
+  addStockToWatchlist: (watchlistId: string, stock: TopStock) => void;
   removeStockFromWatchlist: (watchlistId: string, symbol: string) => void;
   removeWatchlist: (watchlistId: string) => void;
 }
 
-const WatchlistContext = createContext<WatchlistContextProps | undefined>(undefined);
+const WatchlistContext = createContext<WatchlistContextProps | undefined>(
+  undefined,
+);
 
-export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -38,43 +43,70 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Save watchlists to AsyncStorage whenever they change (after initial load)
   useEffect(() => {
     if (!isLoaded) return;
-    AsyncStorage.setItem(WATCHLISTS_STORAGE_KEY, JSON.stringify(watchlists)).catch(e => {
+    AsyncStorage.setItem(
+      WATCHLISTS_STORAGE_KEY,
+      JSON.stringify(watchlists),
+    ).catch(e => {
       console.error('Failed to save watchlists', e);
     });
   }, [watchlists, isLoaded]);
 
   const addWatchlist = (name: string): string => {
     const newId = Date.now().toString();
-    setWatchlists((prev) => [...prev, { id: newId, name, stocks: [] }]);
-    return newId;
+    // name and id should be unique
+    const isNameUnique = watchlists.every(wl => wl.name !== name);
+    if (!isNameUnique) {
+      Alert.alert('Error', 'Watchlist name must be unique');
+      return '';
+    } else {
+      setWatchlists(prev => [...prev, { id: newId, name, stocks: [] }]);
+      return newId;
+    }
   };
 
-  const addStockToWatchlist = (watchlistId: string, stock: TopGainers | TopLosers) => {
-    setWatchlists((prev) =>
-      prev.map((wl) =>
-        wl.id === watchlistId
-          ? { ...wl, stocks: [...wl.stocks, stock] }
-          : wl
-      )
+  const addStockToWatchlist = (watchlistId: string, stock: TopStock) => {
+    // check if the stock is already in the watchlist, if yes then remove it from the watchlist
+    const isInWatchlist = watchlists.some(watchlist =>
+      watchlist.stocks.some(s => s.ticker === stock.ticker),
+    );
+    if (isInWatchlist) {
+      removeStockFromWatchlist(watchlistId, stock.ticker);
+    }
+    setWatchlists(prev =>
+      prev.map(wl =>
+        wl.id === watchlistId ? { ...wl, stocks: [...wl.stocks, stock] } : wl,
+      ),
     );
   };
 
   const removeStockFromWatchlist = (watchlistId: string, symbol: string) => {
-    setWatchlists((prev) =>
-      prev.map((wl) =>
+    console.log('removeStockFromWatchlist', watchlistId, symbol);
+    setWatchlists(prev =>
+      prev.map(wl =>
         wl.id === watchlistId
-          ? { ...wl, stocks: wl.stocks.filter((s) => s.ticker !== symbol) }
-          : wl
-      )
+          ? {
+              ...wl,
+              stocks: wl.stocks.filter((s: TopStock) => s.ticker !== symbol),
+            }
+          : wl,
+      ),
     );
   };
 
   const removeWatchlist = (watchlistId: string) => {
-    setWatchlists((prev) => prev.filter((wl) => wl.id !== watchlistId));
+    setWatchlists(prev => prev.filter(wl => wl.id !== watchlistId));
   };
 
   return (
-    <WatchlistContext.Provider value={{ watchlists, addWatchlist, addStockToWatchlist, removeStockFromWatchlist, removeWatchlist }}>
+    <WatchlistContext.Provider
+      value={{
+        watchlists,
+        addWatchlist,
+        addStockToWatchlist,
+        removeStockFromWatchlist,
+        removeWatchlist,
+      }}
+    >
       {children}
     </WatchlistContext.Provider>
   );
@@ -82,6 +114,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useWatchlist = () => {
   const context = useContext(WatchlistContext);
-  if (!context) throw new Error('useWatchlist must be used within WatchlistProvider');
+  if (!context)
+    throw new Error('useWatchlist must be used within WatchlistProvider');
   return context;
-}; 
+};

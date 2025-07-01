@@ -18,8 +18,9 @@ import {
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
-} from '@gorhom/bottom-sheet';
+} from '@gorhom/bottom-sheet';  
 import { useTheme } from '../../context/ThemeContext';
+import { Theme } from '../../utils';
 
 interface CreateWatchlistBottomSheetProps {
   onCreateWatchlist: (name: string) => void;
@@ -129,7 +130,7 @@ const CreateWatchlist = forwardRef<
 
 CreateWatchlist.displayName = 'CreateWatchlist';
 
-const getStyles = (theme: any) => StyleSheet.create({
+const getStyles = (theme: Theme) => StyleSheet.create({
   bottomSheetBackground: {
     backgroundColor: theme.card,
     borderTopLeftRadius: 16,
@@ -147,7 +148,7 @@ const getStyles = (theme: any) => StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: theme.font.size.lg,
-    fontWeight: theme.font.weight.bold,
+    fontWeight: "bold" as any,
     marginBottom: 20,
     color: theme.text,
   },
@@ -179,7 +180,7 @@ const getStyles = (theme: any) => StyleSheet.create({
   cancelButtonText: {
     color: theme.subtext,
     fontSize: theme.font.size.md,
-    fontWeight: theme.font.weight.medium,
+    fontWeight: "medium" as any,
   },
   createButton: {
     backgroundColor: theme.accent,
@@ -187,7 +188,7 @@ const getStyles = (theme: any) => StyleSheet.create({
   createButtonText: {
     color: theme.card,
     fontSize: theme.font.size.md,
-    fontWeight: theme.font.weight.medium,
+    fontWeight: "medium" as any,
   },
 });
 

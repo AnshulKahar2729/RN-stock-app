@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,24 +11,63 @@ import {
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useStockOverview, useTimeSeriesDaily } from '../../hooks/useStock';
-import { formatCurrency, formatPercentage, formatValue, Theme } from '../../utils';
+import {
+  formatCurrency,
+  formatPercentage,
+  formatValue,
+  Theme,
+} from '../../utils';
 import { TimeSeriesDailyChart } from '../../components/TimeSeriesDailyChart';
 import { useTheme } from '../../context/ThemeContext';
+import AddToWatchlistSheet, {
+  AddToWatchlistSheetRef,
+} from '../../components/AddToWatchlistSheet';
+import { TopStock } from '../../types/stock';
+import { useWatchlist } from '../../context/WatchlistContext';
 
 const ProductScreen = () => {
   const route = useRoute<RouteProp<{ params: { ticker: string } }, 'params'>>();
   const { ticker } = route.params;
   const { data: overview, isLoading, isError } = useStockOverview(ticker);
-  const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading, isError: isTimeSeriesDailyError } = useTimeSeriesDaily(ticker);
+  const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading } =
+    useTimeSeriesDaily(ticker);
   const { theme, mode } = useTheme();
   console.log('timeSeriesDaily', timeSeriesDaily);
   const styles = getStyles(theme);
+  const watchlistSheetRef = useRef<AddToWatchlistSheetRef>(null);
+  const { watchlists } = useWatchlist();
+
+  // Construct a minimal TopStock object from available data
+  const stock: TopStock = {
+    ticker,
+    price: String(overview?.['50DayMovingAverage'] || ''),
+    change_amount: '', // You can enhance this with real data if available
+    change_percentage: '', // You can enhance this with real data if available
+    volume: '', // You can enhance this with real data if available
+  };
+
+  // see if the stock is already in any watchlist
+  const isInWatchlist = watchlists.some((watchlist) =>
+    watchlist.stocks.some((stock) => stock.ticker === ticker),
+  );
+
+  const handleBookmarkPress = useCallback(() => {
+    watchlistSheetRef.current?.show();
+  }, []);
+
+  const handleCloseWatchlistSheet = useCallback(() => {
+    watchlistSheetRef.current?.hide();
+  }, []);
+
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
-        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.background}
+        />
         <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme.subtext }]}>Loading...</Text>
+          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
     );
@@ -36,48 +75,48 @@ const ProductScreen = () => {
 
   if (isError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
-        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.background}
+        />
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme.subtext }]}>Error loading stock data</Text>
+          <Text style={styles.errorText}>Error loading stock data</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
-      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.background}
+      />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }] }>
-          <Text style={[styles.ticker, { color: theme.text }]}>{ticker}</Text>
+        <View style={styles.header}>
+          <Text style={styles.ticker}>{ticker.toUpperCase()}</Text>
 
           {/* Book mark icon */}
-          <TouchableOpacity style={styles.bookmarkIcon}>
-            <Icon name="bookmark-outline" size={24} color={theme.text} />
+          <TouchableOpacity style={styles.bookmarkIcon} onPress={handleBookmarkPress}>
+            <Icon name={isInWatchlist ? 'bookmark' : 'bookmark-outline'} size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
 
         {isTimeSeriesDailyLoading && (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: theme.subtext }]}>Loading...</Text>
+            <Text style={styles.loadingText}>Loading...</Text>
           </View>
         )}
-        
-        {isTimeSeriesDailyError && (
-          <View style={styles.errorContainer}>
-            <Text style={[styles.errorText, { color: theme.subtext }]}>Error loading time series daily</Text>
-          </View>
-        )}
-        
+
         {/* {timeSeriesDaily && ( */}
-          <View style={styles.chartContainer}>
-            <TimeSeriesDailyChart data={timeSeriesDaily || {}} ticker={ticker} />
-          </View>
+        <View style={styles.chartContainer}>
+          <TimeSeriesDailyChart data={timeSeriesDaily || {}} ticker={ticker} />
+        </View>
         {/* )} */}
 
         {/* Price Range */}
@@ -195,152 +234,164 @@ const ProductScreen = () => {
           </View>
         )}
       </ScrollView>
+      {/* AddToWatchlistSheet Bottom Sheet */}
+      <AddToWatchlistSheet
+        ref={watchlistSheetRef}
+        stock={stock}
+        onClose={handleCloseWatchlistSheet}
+      />
     </SafeAreaView>
   );
 };
 
-const DataRow = memo(({ label, value, icon }: { label: string; value: string; icon?: string }) => {
-  const { theme } = useTheme();
-  const styles = getStyles(theme);
-  return (
-  <View style={styles.dataRow}>
-    <View style={styles.labelContainer}>
-      {icon && (
-        <Icon name={icon} size={16} color="#6B7280" style={styles.icon} />
-      )}
-      <Text style={styles.label}>{label}</Text>
-    </View>
-    <Text style={styles.value}>{value}</Text>
-  </View>
-  );
-});
+const DataRow = memo(
+  ({ label, value, icon }: { label: string; value: string; icon?: string }) => {
+    const { theme } = useTheme();
+    const styles = getStyles(theme);
+    return (
+      <View style={styles.dataRow}>
+        <View style={styles.labelContainer}>
+          {icon && (
+            <Icon name={icon} size={16} color="#6B7280" style={styles.icon} />
+          )}
+          <Text style={styles.label}>{label}</Text>
+        </View>
+        <Text style={styles.value}>{value}</Text>
+      </View>
+    );
+  },
+);
 
-const SectionHeader = memo(({ title, icon }: { title: string; icon: string }) => {
-  const { theme } = useTheme();
-  const styles = getStyles(theme);
-  return (
-  <View style={styles.sectionHeader}>
-    <Icon name={icon} size={20} color="#374151" />
-    <Text style={styles.sectionTitle}>{title}</Text>
-  </View>
-  );
-});
+const SectionHeader = memo(
+  ({ title, icon }: { title: string; icon: string }) => {
+    const { theme } = useTheme();
+    const styles = getStyles(theme);
+    return (
+      <View style={styles.sectionHeader}>
+        <Icon name={icon} size={20} color={theme.text} />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+    );
+  },
+);
 
-    const getStyles = (theme: Theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-    padding: 10,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: theme.font.size.md,
-    color: theme.subtext,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: theme.font.size.md,
-    color: theme.subtext,
-  },
-  header: {
-    padding: 14,
-    backgroundColor: theme.card,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ticker: {
-    fontSize: theme.font.size.xxl,
-    fontWeight: "bold" as any,
-    color: theme.text,
-    marginBottom: 4,
-  },
-  companyName: {
-    fontSize: theme.font.size.md,
-    color: theme.subtext,
-    fontWeight: "400" as any,
-  },
-  section: {
-    backgroundColor: theme.card,
-    marginTop: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: theme.border,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.background,
-  },
-  sectionTitle: {
-    fontSize: theme.font.size.lg,
-    fontWeight: "bold" as any,
-    color: theme.text,
-    marginLeft: 8,
-  },
-  dataRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.background,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  icon: {
-    marginRight: 8,
-  },
-  label: {
-    fontSize: theme.font.size.md,
-    color: theme.subtext,
-    fontWeight: "400" as any,
-  },
-  value: {
-    fontSize: theme.font.size.md,
-    color: theme.text,
-    fontWeight: "bold" as any,
-    textAlign: 'right',
-    flex: 1,
-  },
-  priceRangeContainer: {
-    marginTop: 8,
-  },
-  description: {
-    fontSize: theme.font.size.sm,
-    lineHeight: 20,
-    color: theme.subtext,
-    marginTop: 8,
-  },
-  bookmarkIcon: {
-    padding: 10,
-  },
-  chartContainer: {
-    marginTop: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-});
+const getStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      padding: 10,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: theme.font.size.md,
+      color: theme.subtext,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    errorText: {
+      fontSize: theme.font.size.md,
+      color: theme.subtext,
+    },
+    header: {
+      // padding: ,
+      padding: 6,
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    ticker: {
+      fontSize: theme.font.size.xxl,
+      fontWeight: 'bold' as any,
+      color: theme.text,
+      marginBottom: 4,
+    },
+    companyName: {
+      fontSize: theme.font.size.md,
+      color: theme.subtext,
+      fontWeight: '400' as any,
+    },
+    section: {
+      backgroundColor: theme.card,
+      marginTop: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: theme.border,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      paddingBottom: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.background,
+    },
+    sectionTitle: {
+      fontSize: theme.font.size.lg,
+      fontWeight: 'bold' as any,
+      color: theme.text,
+      marginLeft: 8,
+    },
+    dataRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.background,
+    },
+    labelContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    icon: {
+      marginRight: 8,
+    },
+    label: {
+      fontSize: theme.font.size.md,
+      color: theme.subtext,
+      fontWeight: '400' as any,
+    },
+    value: {
+      fontSize: theme.font.size.md,
+      color: theme.text,
+      fontWeight: 'bold' as any,
+      textAlign: 'right',
+      flex: 1,
+    },
+    priceRangeContainer: {
+      marginTop: 8,
+    },
+    description: {
+      fontSize: theme.font.size.sm,
+      lineHeight: 20,
+      color: theme.subtext,
+      marginTop: 8,
+    },
+    bookmarkIcon: {
+      padding: 10,
+    },
+    chartContainer: {
+      marginTop: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+    },
+  });
 
 export default ProductScreen;
