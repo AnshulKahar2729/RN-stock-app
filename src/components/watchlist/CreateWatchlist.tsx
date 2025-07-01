@@ -19,6 +19,7 @@ import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from '@gorhom/bottom-sheet';
+import { useTheme } from '../../context/ThemeContext';
 
 interface CreateWatchlistBottomSheetProps {
   onCreateWatchlist: (name: string) => void;
@@ -36,6 +37,7 @@ const CreateWatchlist = forwardRef<
   const [newWatchlistName, setNewWatchlistName] = useState<string>('');
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['30%', '30%'], []);
+  const { theme } = useTheme();
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
@@ -80,10 +82,10 @@ const CreateWatchlist = forwardRef<
   };
 
   const renderBottomSheetContent = () => (
-    <BottomSheetView style={styles.bottomSheetContent}>
-      <Text style={styles.bottomSheetTitle}>Create New Watchlist</Text>
+    <BottomSheetView style={getStyles(theme).bottomSheetContent}>
+      <Text style={getStyles(theme).bottomSheetTitle}>Create New Watchlist</Text>
       <TextInput
-        style={styles.input}
+        style={getStyles(theme).input}
         placeholder="Enter watchlist name"
         placeholderTextColor="#9CA3AF"
         value={newWatchlistName}
@@ -92,18 +94,18 @@ const CreateWatchlist = forwardRef<
         returnKeyType="done"
         onSubmitEditing={handleCreateWatchlist}
       />
-      <View style={styles.buttonRow}>
+      <View style={getStyles(theme).buttonRow}>
         <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
+          style={[getStyles(theme).button, getStyles(theme).cancelButton]}
           onPress={hide}
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Text style={getStyles(theme).cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.createButton]}
+          style={[getStyles(theme).button, getStyles(theme).createButton]}
           onPress={handleCreateWatchlist}
         >
-          <Text style={styles.createButtonText}>Create</Text>
+          <Text style={getStyles(theme).createButtonText}>Create</Text>
         </TouchableOpacity>
       </View>
     </BottomSheetView>
@@ -117,8 +119,8 @@ const CreateWatchlist = forwardRef<
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       enablePanDownToClose
-      handleIndicatorStyle={styles.handleIndicator}
-      backgroundStyle={styles.bottomSheetBackground}
+      handleIndicatorStyle={getStyles(theme).handleIndicator}
+      backgroundStyle={getStyles(theme).bottomSheetBackground}
     >
       {renderBottomSheetContent()}
     </BottomSheet>
@@ -127,14 +129,14 @@ const CreateWatchlist = forwardRef<
 
 CreateWatchlist.displayName = 'CreateWatchlist';
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   bottomSheetBackground: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
   handleIndicator: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: theme.border,
     width: 36,
     height: 4,
   },
@@ -144,20 +146,20 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 2 : 2,
   },
   bottomSheetTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.font.size.lg,
+    fontWeight: theme.font.weight.bold,
     marginBottom: 20,
-    color: '#1F2937',
+    color: theme.text,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 24,
-    fontSize: 16,
-    color: '#1F2937',
-    backgroundColor: '#FAFAFA',
+    fontSize: theme.font.size.md,
+    color: theme.text,
+    backgroundColor: theme.background,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -170,22 +172,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.border,
   },
   cancelButtonText: {
-    color: '#6B7280',
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.subtext,
+    fontSize: theme.font.size.md,
+    fontWeight: theme.font.weight.medium,
   },
   createButton: {
-    backgroundColor: '#374151',
+    backgroundColor: theme.accent,
   },
   createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.card,
+    fontSize: theme.font.size.md,
+    fontWeight: theme.font.weight.medium,
   },
 });
 

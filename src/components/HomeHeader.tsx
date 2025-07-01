@@ -4,11 +4,12 @@ import { Searchbar } from './common/Searchbar';
 // import { useStockSearch } from '../hooks/useStock';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../context/ThemeContext';
+import { Theme } from '../utils';
 
 export const HomeHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, mode, toggleTheme } = useTheme();
-
+  const styles = getStyles(theme);
   return (
     <View style={[styles.header, { backgroundColor: theme.header, borderBottomColor: theme.border }]}>
       <View style={styles.headerRow}>
@@ -25,7 +26,7 @@ export const HomeHeader = () => {
         </TouchableOpacity>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <View style={[styles.searchBox, { backgroundColor: mode === 'dark' ? '#23232A' : '#f8f8f8' }]}>
+          <View style={[styles.searchBox, { backgroundColor: theme.card }]}>
             <Icon
               name="search"
               size={18}
@@ -46,14 +47,14 @@ export const HomeHeader = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: Theme) => StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingBottom: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.header,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: theme.border,
   },
   headerRow: {
     flexDirection: 'row',
@@ -64,13 +65,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontSize: theme.font.size.lg,
+      fontWeight: "bold" as any,
+    color: theme.primary,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6c757d',
+    fontSize: theme.font.size.sm,
+    color: theme.subtext,
   },
   searchContainer: {
     flex: 1,
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+      backgroundColor: theme.card,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -92,12 +93,13 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: theme.font.size.md,
     padding: 0,
+    color: theme.text,
   },
   loadingText: {
     marginTop: 4,
-    fontSize: 12,
-    color: '#999',
+    fontSize: theme.font.size.xs,
+    color: theme.subtext,
   },
 });

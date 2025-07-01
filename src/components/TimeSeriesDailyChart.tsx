@@ -1,8 +1,9 @@
 // components/TimeSeriesDailyChart.tsx
 import React, { useMemo } from 'react';
-import { View, Text, Dimensions } from 'react-native';
+import { View, Text, Dimensions, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../context/ThemeContext';
+import { Theme } from '../utils';
 
 type TimeSeriesDaily = Record<
   string,
@@ -21,6 +22,53 @@ interface TimeSeriesDailyChartProps {
   height?: number;
 }
 
+const getStyles = (theme: Theme) => StyleSheet.create({
+  chartContainer: {
+    backgroundColor: theme.card,
+    borderRadius: 8,
+    padding: 16,
+    margin: 16,
+    shadowColor: theme.shadow.color,
+    shadowOffset: theme.shadow.offset,
+    shadowOpacity: theme.shadow.opacity,
+    shadowRadius: theme.shadow.radius,
+    elevation: theme.shadow.elevation,
+  },
+  emptyContainer: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.background,
+    borderRadius: 8,
+    margin: 16,
+    shadowColor: theme.shadow.color,
+    shadowOffset: theme.shadow.offset,
+    shadowOpacity: theme.shadow.opacity,
+    shadowRadius: theme.shadow.radius,
+    elevation: theme.shadow.elevation,
+  },
+  emptyText: {
+    color: theme.subtext,
+    fontSize: theme.font.size.md,
+    fontWeight: theme.font.weight.medium as any,
+  },
+  chartTitle: {
+    fontSize: theme.font.size.lg,
+    fontWeight: theme.font.weight.bold as any,
+    color: theme.text,
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    fontSize: theme.font.size.xs,
+    color: theme.subtext,
+    marginBottom: 16,
+  },
+  lineChart: {
+    marginVertical: 8,
+    borderRadius: 16,
+  },
+});
+
 const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
   data,
   ticker,
@@ -28,6 +76,7 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
 }) => {
   const screenWidth = Dimensions.get('window').width;
   const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   const chartData = useMemo(() => {
     if (!data) return { labels: [], datasets: [{ data: [] }] };
@@ -72,44 +121,18 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
 
   if (!data || Object.keys(data).length === 0) {
     return (
-      <View style={{
-        height: height,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: theme.background,
-        borderRadius: 8,
-        margin: 16
-      }}>
-        <Text style={{ color: theme.subtext }}>No data available for {ticker}</Text>
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>No data available for {ticker}</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ 
-      backgroundColor: theme.card, 
-      borderRadius: 8, 
-      padding: 16, 
-      margin: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3
-    }}>
-      <Text style={{ 
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        color: theme.text,
-        marginBottom: 4
-      }}>
+    <View style={styles.chartContainer}>
+      <Text style={styles.chartTitle}>
         {ticker.toUpperCase()} - Daily Price
       </Text>
-      <Text style={{ 
-        fontSize: 12, 
-        color: theme.subtext,
-        marginBottom: 16
-      }}>
+      <Text style={styles.chartSubtitle}>
         Last 30 days
       </Text>
       
@@ -119,10 +142,7 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
         height={height}
         chartConfig={chartConfig}
         bezier
-        style={{
-          marginVertical: 8,
-          borderRadius: 16
-        }}
+        style={styles.lineChart}
         withDots={false}
         withInnerLines={false}
         withOuterLines={true}

@@ -37,6 +37,29 @@ export type Theme = {
     line: string;
     label: string;
   };
+  font: {
+    size: {
+      xs: number;
+      sm: number;
+      md: number;
+      lg: number;
+      xl: number;
+      xxl: number;
+    };
+    weight: {
+      regular: string;
+      medium: string;
+      bold: string;
+      extrabold: string;
+    };
+  };
+  shadow: {
+    color: string;
+    opacity: number;
+    radius: number;
+    offset: { width: number; height: number };
+    elevation: number;
+  };
 };
 
 export const lightTheme: Theme = {
@@ -56,6 +79,29 @@ export const lightTheme: Theme = {
     line: 'rgba(37, 99, 235, 1)',
     label: 'rgba(0, 0, 0, 1)',
   },
+  font: {
+    size: {
+      xs: 12,
+      sm: 14,
+      md: 16,
+      lg: 18,
+      xl: 20,
+      xxl: 24,
+    },
+    weight: {
+      regular: '400',
+      medium: '500',
+      bold: '700',
+      extrabold: '800',
+    },
+  },
+  shadow: {
+    color: '#000',
+    opacity: 0.08,
+    radius: 4,
+    offset: { width: 0, height: 2 },
+    elevation: 3,
+  },
 };
 
 export const darkTheme: Theme = {
@@ -65,7 +111,7 @@ export const darkTheme: Theme = {
   subtext: '#A1A1AA',
   border: '#27272A',
   primary: '#60A5FA',
-  accent: '#818CF8',
+  accent: '#60A5FA',
   error: '#F87171',
   header: '#23232A',
   tabBarActive: '#60A5FA',
@@ -74,5 +120,28 @@ export const darkTheme: Theme = {
     background: '#23232A',
     line: 'rgba(96, 165, 250, 1)',
     label: 'rgba(243, 244, 246, 1)',
+  },
+  font: {
+    size: {
+      xs: 12,
+      sm: 14,
+      md: 16,
+      lg: 18,
+      xl: 20,
+      xxl: 24,
+    },
+    weight: {
+      regular: '400',
+      medium: '500',
+      bold: '700',
+      extrabold: '800',
+    },
+  },
+  shadow: {
+    color: '#000',
+    opacity: 0.16,
+    radius: 4,
+    offset: { width: 0, height: 2 },
+    elevation: 3,
   },
 };

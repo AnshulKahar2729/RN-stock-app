@@ -11,7 +11,7 @@ import {
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useStockOverview, useTimeSeriesDaily } from '../../hooks/useStock';
-import { formatCurrency, formatPercentage, formatValue } from '../../utils';
+import { formatCurrency, formatPercentage, formatValue, Theme } from '../../utils';
 import { TimeSeriesDailyChart } from '../../components/TimeSeriesDailyChart';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -22,7 +22,7 @@ const ProductScreen = () => {
   const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading, isError: isTimeSeriesDailyError } = useTimeSeriesDaily(ticker);
   const { theme, mode } = useTheme();
   console.log('timeSeriesDaily', timeSeriesDaily);
-
+  const styles = getStyles(theme);
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
@@ -199,7 +199,10 @@ const ProductScreen = () => {
   );
 };
 
-const DataRow = memo(({ label, value, icon }: { label: string; value: string; icon?: string }) => (
+const DataRow = memo(({ label, value, icon }: { label: string; value: string; icon?: string }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+  return (
   <View style={styles.dataRow}>
     <View style={styles.labelContainer}>
       {icon && (
@@ -209,19 +212,24 @@ const DataRow = memo(({ label, value, icon }: { label: string; value: string; ic
     </View>
     <Text style={styles.value}>{value}</Text>
   </View>
-));
+  );
+});
 
-const SectionHeader = memo(({ title, icon }: { title: string; icon: string }) => (
+const SectionHeader = memo(({ title, icon }: { title: string; icon: string }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+  return (
   <View style={styles.sectionHeader}>
     <Icon name={icon} size={20} color="#374151" />
     <Text style={styles.sectionTitle}>{title}</Text>
   </View>
-));
+  );
+});
 
-const styles = StyleSheet.create({
+    const getStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: theme.background,
     padding: 10,
   },
   scrollView: {
@@ -233,8 +241,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: theme.font.size.md,
+    color: theme.subtext,
   },
   errorContainer: {
     flex: 1,
@@ -242,37 +250,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: theme.font.size.md,
+    color: theme.subtext,
   },
   header: {
     padding: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: theme.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   ticker: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: theme.font.size.xxl,
+    fontWeight: "bold" as any,
+    color: theme.text,
     marginBottom: 4,
   },
   companyName: {
-    fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: theme.font.size.md,
+    color: theme.subtext,
+    fontWeight: "400" as any,
   },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginTop: 12,
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.border,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -280,12 +288,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: theme.background,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
+    fontSize: theme.font.size.lg,
+    fontWeight: "bold" as any,
+    color: theme.text,
     marginLeft: 8,
   },
   dataRow: {
@@ -294,7 +302,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F9FAFB',
+    borderBottomColor: theme.background,
   },
   labelContainer: {
     flexDirection: 'row',
@@ -305,14 +313,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   label: {
-    fontSize: 15,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: theme.font.size.md,
+    color: theme.subtext,
+    fontWeight: "400" as any,
   },
   value: {
-    fontSize: 15,
-    color: '#111827',
-    fontWeight: '600',
+    fontSize: theme.font.size.md,
+    color: theme.text,
+    fontWeight: "bold" as any,
     textAlign: 'right',
     flex: 1,
   },
@@ -320,9 +328,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   description: {
-    fontSize: 14,
+    fontSize: theme.font.size.sm,
     lineHeight: 20,
-    color: '#4B5563',
+    color: theme.subtext,
     marginTop: 8,
   },
   bookmarkIcon: {

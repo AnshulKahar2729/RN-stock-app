@@ -14,6 +14,8 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useWatchlist } from '../context/WatchlistContext';
 import { TopStock } from '../types/stock';
+import { useTheme } from '../context/ThemeContext';
+import { Theme } from '../utils';
 
 interface AddToWatchlistSheetProps {
   stock: TopStock;
@@ -26,6 +28,7 @@ const AddToWatchlistSheet = forwardRef<
 >(({ stock, onClose }, ref) => {
   const { watchlists, addWatchlist, addStockToWatchlist } = useWatchlist();
   const [newListName, setNewListName] = useState('');
+  const { theme } = useTheme();
 
   // Bottom sheet snap points
   const snapPoints = useMemo(() => ['50%', '75%'], []);
@@ -52,17 +55,17 @@ const AddToWatchlistSheet = forwardRef<
   const renderWatchlistItem = useCallback(
     ({ item }: { item: any }) => (
       <TouchableOpacity
-        style={styles.watchlistItem}
+        style={getStyles(theme).watchlistItem}
         onPress={() => handleAddToExisting(item.id)}
       >
-        <View style={styles.watchlistItemContent}>
-          <Text style={styles.watchlistName}>{item.name}</Text>
-          <Text style={styles.stockCount}>{item.stocks.length} stocks</Text>
+        <View style={getStyles(theme).watchlistItemContent}>
+          <Text style={getStyles(theme).watchlistName}>{item.name}</Text>
+          <Text style={getStyles(theme).stockCount}>{item.stocks.length} stocks</Text>
         </View>
-        <Text style={styles.addIcon}>+</Text>
+        <Text style={getStyles(theme).addIcon}>+</Text>
       </TouchableOpacity>
     ),
-    [handleAddToExisting],
+    [handleAddToExisting, theme],
   );
 
   return (
@@ -73,44 +76,44 @@ const AddToWatchlistSheet = forwardRef<
       enablePanDownToClose
       onDismiss={onClose}
     >
-      <BottomSheetView style={styles.container}>
-        <Text style={styles.title}>Add {stock.ticker} to Watchlist</Text>
+      <BottomSheetView style={getStyles(theme).container}>
+        <Text style={getStyles(theme).title}>Add {stock.ticker} to Watchlist</Text>
 
         {/* Existing Watchlists */}
-        <Text style={styles.sectionTitle}>Select Watchlist:</Text>
+        <Text style={getStyles(theme).sectionTitle}>Select Watchlist:</Text>
         <FlatList
           data={watchlists}
           renderItem={renderWatchlistItem}
           keyExtractor={item => item.id}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No watchlists yet.</Text>
+            <Text style={getStyles(theme).emptyText}>No watchlists yet.</Text>
           }
-          style={styles.watchlistsList}
+          style={getStyles(theme).watchlistsList}
         />
 
         {/* Create New Watchlist */}
-        <Text style={styles.sectionTitle}>Or create new:</Text>
+        <Text style={getStyles(theme).sectionTitle}>Or create new:</Text>
         <BottomSheetTextInput
-          style={styles.input}
+          style={getStyles(theme).input}
           placeholder="New Watchlist Name"
           value={newListName}
           onChangeText={setNewListName}
           autoFocus={watchlists.length === 0}
         />
 
-        <View style={styles.buttonContainer}>
+        <View style={getStyles(theme).buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
+            style={[getStyles(theme).button, getStyles(theme).cancelButton]}
             onPress={onClose}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={getStyles(theme).cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.createButton]}
+            style={[getStyles(theme).button, getStyles(theme).createButton]}
             onPress={handleCreateAndAdd}
           >
-            <Text style={styles.createButtonText}>Create & Add</Text>
+            <Text style={getStyles(theme).createButtonText}>Create & Add</Text>
           </TouchableOpacity>
         </View>
       </BottomSheetView>
@@ -118,22 +121,24 @@ const AddToWatchlistSheet = forwardRef<
   );
 });
 
-const styles = StyleSheet.create({
+const getStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: theme.background,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: theme.font.size.xl,
+    fontWeight: "bold" as any,
     marginBottom: 20,
     textAlign: 'center',
+    color: theme.text,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.font.size.md,
+    fontWeight: "400" as any,
     marginBottom: 12,
-    color: '#333',
+    color: theme.text,
   },
   watchlistsList: {
     maxHeight: 200,
@@ -144,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.card,
     borderRadius: 8,
     marginBottom: 8,
   },
@@ -152,34 +157,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   watchlistName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: theme.font.size.md,
+    fontWeight: "400" as any,
+    color: theme.text,
   },
   stockCount: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.font.size.sm,
+    color: theme.subtext,
     marginTop: 2,
   },
   addIcon: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontSize: theme.font.size.lg,
+    fontWeight: "bold" as any,
+    color: theme.primary,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: theme.subtext,
     fontStyle: 'italic',
     padding: 20,
+    fontSize: theme.font.size.md,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    fontSize: theme.font.size.md,
+    backgroundColor: theme.background,
+    color: theme.text,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -192,22 +199,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.border,
   },
   cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.subtext,
+    fontSize: theme.font.size.md,
+    fontWeight: "400" as any,
   },
   createButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
   },
   createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.card,
+    fontSize: theme.font.size.md,
+    fontWeight: "bold" as any,
   },
 });
 
