@@ -1,0 +1,52 @@
+// import { getCache, setCache } from './cache';
+import { TopGainers, TopLosers } from '../types';
+import { config } from '../utils/config';
+import axios from 'axios';
+
+// const cacheDuration = 60 * 5; // 5 minutes
+export const { API_KEY, BASE_URL } = config;
+
+export async function fetchTopGainers(): Promise<TopGainers[]> {
+  // const cacheKey = 'top_gainers';
+  // const cached = await getCache<Stock[]>(cacheKey, cacheDuration);
+  // console.log({cached});
+  // if (cached) return cached;
+
+  const { data } = await axios.get(
+    `${BASE_URL}?function=TOP_GAINERS_LOSERS&apikey=${API_KEY}`,
+  );
+
+  console.log({data});
+
+  // Map data to Stock[]
+  const stocks: TopGainers[] = data.top_gainers.map((stock: any) => ({
+    change_amount: stock.change_amount,
+    change_percentage: stock.change_percentage,
+    price: stock.price,
+    ticker: stock.ticker,
+    volume: stock.volume,
+  }));
+  // await setCache(cacheKey, stocks);
+  return stocks;
+}
+
+  export async function fetchTopLosers(): Promise<TopLosers[]> {
+  // const cacheKey = 'top_losers';
+  // const cached = await getCache<TopLosers[]>(cacheKey, cacheDuration);
+  // if (cached) return cached;
+
+  const { data } = await axios.get(
+    `${BASE_URL}?function=TOP_GAINERS_LOSERS&apikey=${API_KEY}`,
+  );
+
+  // Map data to Stock[]
+  const stocks: TopLosers[] = data.top_losers.map((stock: any) => ({
+    change_amount: stock.change_amount,
+    change_percentage: stock.change_percentage,
+    price: stock.price,
+    ticker: stock.ticker,
+    volume: stock.volume,
+  }));
+  // await setCache(cacheKey, stocks);
+  return stocks;
+}
