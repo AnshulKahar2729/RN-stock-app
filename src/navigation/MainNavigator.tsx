@@ -13,7 +13,28 @@ import WatchlistScreen from '../screens/Watchlist/WatchListScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
-const RootStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
+const WatchlistStack = createNativeStackNavigator();
+
+// Home Stack Navigator
+const HomeStackNavigator = () => (
+  <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+    <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+    <HomeStack.Screen name="Product" component={ProductScreen} />
+    <HomeStack.Screen name="ViewAll" component={ViewAllScreen} />
+    <HomeStack.Screen name="WatchlistDetail" component={WatchlistScreen} />
+  </HomeStack.Navigator>
+);
+
+// Watchlist Stack Navigator
+const WatchlistStackNavigator = () => (
+  <WatchlistStack.Navigator screenOptions={{ headerShown: false }}>
+    <WatchlistStack.Screen name="WatchlistMain" component={WatchlistHomeScreen} />
+    <WatchlistStack.Screen name="Product" component={ProductScreen} />
+    <WatchlistStack.Screen name="ViewAll" component={ViewAllScreen} />
+    <WatchlistStack.Screen name="WatchlistDetail" component={WatchlistScreen} />
+  </WatchlistStack.Navigator>
+);
 
 // Tab Navigator Component
 const TabNavigator = React.memo(() => {
@@ -43,30 +64,23 @@ const TabNavigator = React.memo(() => {
     >
       <Tab.Screen
         name="HomeTab"
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{ title: 'Home' }}
       />
       <Tab.Screen
         name="WatchlistTab"
-        component={WatchlistHomeScreen}
+        component={WatchlistStackNavigator}
         options={{ title: 'Watchlist' }}
       />
     </Tab.Navigator>
   );
 });
 
-// Main Navigator with shared screens at root level
+// Main Navigator
 const MainNavigator = () => (
   <SafeAreaProvider>
     <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Tab Navigator as the main screen */}
-        <RootStack.Screen name="MainTabs" component={TabNavigator} />
-        {/* Shared screens accessible from any tab */}
-        <RootStack.Screen name="Product" component={ProductScreen} />
-        <RootStack.Screen name="ViewAll" component={ViewAllScreen} />
-        <RootStack.Screen name="WatchlistDetail" component={WatchlistScreen} />
-      </RootStack.Navigator>
+      <TabNavigator />
     </NavigationContainer>
   </SafeAreaProvider>
 );
