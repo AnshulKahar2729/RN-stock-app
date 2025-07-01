@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { useTheme } from '../context/ThemeContext';
 
 type TimeSeriesDaily = Record<
   string,
@@ -26,6 +27,7 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
   height = 220
 }) => {
   const screenWidth = Dimensions.get('window').width;
+  const { theme } = useTheme();
 
   const chartData = useMemo(() => {
     if (!data) return { labels: [], datasets: [{ data: [] }] };
@@ -46,19 +48,19 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
       labels: entries.map(entry => entry.formattedDate),
       datasets: [{
         data: entries.map(entry => entry.close),
-        color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`, // Blue color
+        color: (opacity = 1) => theme.chart.line.replace('1)', `${opacity})`),
         strokeWidth: 2
       }]
     };
-  }, [data]);
+  }, [data, theme.chart.line]);
 
   const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
+    backgroundColor: theme.chart.background,
+    backgroundGradientFrom: theme.chart.background,
+    backgroundGradientTo: theme.chart.background,
     decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => theme.chart.line.replace('1)', `${opacity})`),
+    labelColor: (opacity = 1) => theme.chart.label.replace('1)', `${opacity})`),
     style: {
       borderRadius: 16
     },
@@ -74,18 +76,18 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
         height: height,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f9fafb',
+        backgroundColor: theme.background,
         borderRadius: 8,
         margin: 16
       }}>
-        <Text style={{ color: '#6b7280' }}>No data available for {ticker}</Text>
+        <Text style={{ color: theme.subtext }}>No data available for {ticker}</Text>
       </View>
     );
   }
 
   return (
     <View style={{ 
-      backgroundColor: 'white', 
+      backgroundColor: theme.card, 
       borderRadius: 8, 
       padding: 16, 
       margin: 16,
@@ -98,14 +100,14 @@ const TimeSeriesDailyChart: React.FC<TimeSeriesDailyChartProps> = ({
       <Text style={{ 
         fontSize: 18, 
         fontWeight: 'bold', 
-        color: '#1f2937',
+        color: theme.text,
         marginBottom: 4
       }}>
         {ticker.toUpperCase()} - Daily Price
       </Text>
       <Text style={{ 
         fontSize: 12, 
-        color: '#6b7280',
+        color: theme.subtext,
         marginBottom: 16
       }}>
         Last 30 days

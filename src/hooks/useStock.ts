@@ -781,5 +781,10 @@ export const useTimeSeriesDaily = (ticker: string) => {
     queryKey: ['time-series-daily', ticker],
     queryFn: () => fetchTimeSeriesDaily(ticker),
     enabled: !!ticker,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
 };

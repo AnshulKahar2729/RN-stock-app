@@ -6,6 +6,7 @@ import { Watchlist } from '../../types/stock';
 import { useWatchlist } from '../../context/WatchlistContext';
 import StockCard from '../../components/TopStockCard';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function WatchlistScreen() {
   const { watchlists } = useWatchlist();
@@ -13,6 +14,7 @@ export default function WatchlistScreen() {
     useRoute<RouteProp<{ params: { title: string; id: string } }, 'params'>>();
   const { title, id } = route.params;
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
+  const { theme, mode } = useTheme();
 
   useEffect(() => {
     const selectedWatchlist = watchlists.find(w => w.id === id);
@@ -23,16 +25,14 @@ export default function WatchlistScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconContainer}>
-        <Icon name="trending-up" size={48} color="#94A3B8" />
+      <View style={[styles.emptyIconContainer, { backgroundColor: theme.card }] }>
+        <Icon name="trending-up" size={48} color={theme.subtext} />
       </View>
-      <Text style={styles.emptyTitle}>No stocks yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Add stocks to your watchlist to track their performance
-      </Text>
-      <TouchableOpacity style={styles.addFirstStockButton}>
-        <Icon name="add" size={20} color="white" />
-        <Text style={styles.addFirstStockText}>Add Your First Stock</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>No stocks yet</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.subtext }]}>Add stocks to your watchlist to track their performance</Text>
+      <TouchableOpacity style={[styles.addFirstStockButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}>
+        <Icon name="add" size={20} color={theme.text} />
+        <Text style={[styles.addFirstStockText, { color: theme.text }]}>Add Your First Stock</Text>
       </TouchableOpacity>
     </View>
   );
@@ -52,24 +52,21 @@ export default function WatchlistScreen() {
 
   if (!watchlist) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
+        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
         <View style={styles.notFoundContainer}>
-          <Icon name="error-outline" size={64} color="#EF4444" />
-          <Text style={styles.notFoundTitle}>Watchlist Not Found</Text>
-          <Text style={styles.notFoundSubtitle}>
-            The watchlist you're looking for doesn't exist
-          </Text>
+          <Icon name="error-outline" size={64} color={theme.error} />
+          <Text style={[styles.notFoundTitle, { color: theme.text }]}>Watchlist Not Found</Text>
+          <Text style={[styles.notFoundSubtitle, { color: theme.subtext }]}>The watchlist you're looking for doesn't exist</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
       <Header title={title} stockCount={watchlist.stocks?.length || 0} />
-      
       <View style={styles.content}>
         {/* Stock List */}
         <View style={styles.stockList}>
@@ -251,21 +248,20 @@ const styles = StyleSheet.create({
 
 function Header({ title, stockCount }: { title: string; stockCount: number }) {
   const navigation = useNavigation<any>();
-  
+  const { theme } = useTheme();
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: theme.header, borderBottomColor: theme.border }] }>
       <View style={styles.headerLeft}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={{ padding: 4 }} // Increase touch target
         >
-          <Icon name="arrow-back" size={24} color="#1E293B" />
+          <Icon name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>{title}</Text>
       </View>
-      
       <View style={styles.headerRight}>
-        <Text style={styles.stockCount}>
+        <Text style={[styles.stockCount, { color: theme.subtext }] }>
           {stockCount} {stockCount === 1 ? 'stock' : 'stocks'}
         </Text>
       </View>

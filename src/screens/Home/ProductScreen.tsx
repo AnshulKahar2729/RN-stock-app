@@ -13,20 +13,22 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useStockOverview, useTimeSeriesDaily } from '../../hooks/useStock';
 import { formatCurrency, formatPercentage, formatValue } from '../../utils';
 import { TimeSeriesDailyChart } from '../../components/TimeSeriesDailyChart';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProductScreen = () => {
   const route = useRoute<RouteProp<{ params: { ticker: string } }, 'params'>>();
   const { ticker } = route.params;
   const { data: overview, isLoading, isError } = useStockOverview(ticker);
   const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading, isError: isTimeSeriesDailyError } = useTimeSeriesDaily(ticker);
+  const { theme, mode } = useTheme();
   console.log('timeSeriesDaily', timeSeriesDaily);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
+        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={[styles.loadingText, { color: theme.subtext }]}>Loading...</Text>
         </View>
       </SafeAreaView>
     );
@@ -34,41 +36,41 @@ const ProductScreen = () => {
 
   if (isError) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
+        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error loading stock data</Text>
+          <Text style={[styles.errorText, { color: theme.subtext }]}>Error loading stock data</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }] }>
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.ticker}>{ticker}</Text>
+        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }] }>
+          <Text style={[styles.ticker, { color: theme.text }]}>{ticker}</Text>
 
           {/* Book mark icon */}
           <TouchableOpacity style={styles.bookmarkIcon}>
-            <Icon name="bookmark-outline" size={24} color="#111827" />
+            <Icon name="bookmark-outline" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
 
         {isTimeSeriesDailyLoading && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading...</Text>
+            <Text style={[styles.loadingText, { color: theme.subtext }]}>Loading...</Text>
           </View>
         )}
         
         {isTimeSeriesDailyError && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Error loading time series daily</Text>
+            <Text style={[styles.errorText, { color: theme.subtext }]}>Error loading time series daily</Text>
           </View>
         )}
         

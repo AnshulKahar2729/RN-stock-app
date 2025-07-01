@@ -15,6 +15,7 @@ import TopStockCard from '../../components/TopStockCard';
 import { TopStock } from '../../types/stock';
 import { EmptyStockGrid } from '../../components/EmptyStockGrid';
 import { HomeHeader } from '../../components/HomeHeader';
+import { useTheme } from '../../context/ThemeContext';
 
 const HomeScreen = ({ navigation }: any) => {
   const [gainers, setGainers] = useState<TopStock[]>([]);
@@ -22,6 +23,7 @@ const HomeScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { theme, mode } = useTheme();
 
   const loadStockData = useCallback(async (isRefresh = false) => {
     try {
@@ -80,22 +82,22 @@ const HomeScreen = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading stocks...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }] }>
+        <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.subtext }]}>Loading stocks...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+    <View style={[styles.container, { backgroundColor: theme.background }] }>
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
 
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -103,16 +105,16 @@ const HomeScreen = ({ navigation }: any) => {
         <HomeHeader />
 
         {/* Top Gainers Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.card }] }>
           <View style={styles.sectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Top Gainers</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Top Gainers</Text>
             </View>
             <TouchableOpacity
               onPress={() => navigateToViewAll('gainers')}
-              style={styles.viewAllButton}
+              style={[styles.viewAllButton, { backgroundColor: theme.primary + '15' }]}
             >
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: theme.primary }]}>View All</Text>
             </TouchableOpacity>
           </View>
 
@@ -145,16 +147,16 @@ const HomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* Top Losers Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.card }] }>
           <View style={styles.sectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Top Losers</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Top Losers</Text>
             </View>
             <TouchableOpacity
               onPress={() => navigateToViewAll('losers')}
-              style={styles.viewAllButton}
+              style={[styles.viewAllButton, { backgroundColor: theme.primary + '15' }]}
             >
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: theme.primary }]}>View All</Text>
             </TouchableOpacity>
           </View>
 

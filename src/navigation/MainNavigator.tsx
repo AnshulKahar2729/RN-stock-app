@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
+import { DefaultTheme, DarkTheme as NavigationDarkTheme, Theme as NavigationTheme } from '@react-navigation/native';
 
 // Import your screens
 import HomeScreen from '../screens/Home/HomeScreen';
@@ -41,6 +43,7 @@ const WatchlistStackNavigator = () => (
 
 // Tab Navigator Component
 const TabNavigator = React.memo(() => {
+  const { theme } = useTheme();
   const tabBarIcon = (
     { focused, color, size }: { focused: boolean; color: string; size: number },
     routeName: string,
@@ -60,8 +63,9 @@ const TabNavigator = React.memo(() => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: props => tabBarIcon(props, route.name),
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: theme.tabBarActive,
+        tabBarInactiveTintColor: theme.tabBarInactive,
+        tabBarStyle: { backgroundColor: theme.header },
         headerShown: false,
       })}
     >
@@ -80,12 +84,27 @@ const TabNavigator = React.memo(() => {
 });
 
 // Main Navigator
-const MainNavigator = () => (
-  <SafeAreaProvider>
-    <NavigationContainer>
-      <TabNavigator />
-    </NavigationContainer>
-  </SafeAreaProvider>
-);
+const MainNavigator = () => {
+  const { theme, mode } = useTheme();
+  const navigationTheme: NavigationTheme = {
+    ...(mode === 'dark' ? NavigationDarkTheme : DefaultTheme),
+    colors: {
+      ...(mode === 'dark' ? NavigationDarkTheme.colors : DefaultTheme.colors),
+      background: theme.background,
+      card: theme.header,
+      text: theme.text,
+      border: theme.border,
+      primary: theme.primary,
+      notification: theme.accent,
+    },
+  };
+  return (
+    <SafeAreaProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <TabNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
+  );
+};
 
 export default MainNavigator;

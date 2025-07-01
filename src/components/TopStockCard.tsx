@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TopStock } from '../types/stock';
 import { useNavigation } from '@react-navigation/native';
 import { formatCurrency } from '../utils';
+import { useTheme } from '../context/ThemeContext';
 
 interface TopStockCardProps {
   stock: TopStock;
@@ -11,22 +12,26 @@ interface TopStockCardProps {
 const TopStockCard: React.FC<TopStockCardProps> = memo(({ stock }) => {
   const isPositive = stock.change_percentage >= '0';
   const navigation = useNavigation<any>();
+  const { theme, mode } = useTheme();
 
   const handlePress = () => {
     navigation.navigate('Product', { ticker: stock.ticker });
   };
 
   // Use only green/red based on performance
-  const primaryColor = isPositive ? '#10b981' : '#ef4444';
+  const positiveColor = '#10b981';
+  const negativeColor = '#ef4444';
+  const primaryColor = isPositive ? positiveColor : negativeColor;
+  const cardBg = mode === 'dark' ? theme.card : (isPositive ? '#f8fffa' : '#fff8f8');
 
   return (
     <TouchableOpacity
       style={[
         styles.stockCard,
         { 
-          backgroundColor: isPositive ? '#f8fffa' : '#fff8f8',
+          backgroundColor: cardBg,
           borderLeftWidth: 3,
-          borderLeftColor: isPositive ? '#10b981' : '#ef4444',
+          borderLeftColor: primaryColor,
         }
       ]}
       onPress={handlePress}
@@ -59,7 +64,7 @@ const TopStockCard: React.FC<TopStockCardProps> = memo(({ stock }) => {
 
       {/* Stock Price with emphasis */}
       <View style={styles.priceRow}>
-          <Text style={styles.stockPrice}>
+        <Text style={[styles.stockPrice, { color: theme.text }] }>
           {typeof stock.price === 'string' ? formatCurrency(stock.price) : formatCurrency(stock.price) || '0.00'}
         </Text>
       </View>
@@ -87,7 +92,8 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 4, // reduced
     padding: 10, // reduced
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
+    // backgroundColor : 
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: {
