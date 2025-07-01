@@ -13,10 +13,10 @@ import {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { useWatchlist } from '../context/WatchlistContext';
-import { TopGainers, TopLosers } from '../types';
+import { TopStock } from '../types/stock';
 
 interface AddToWatchlistSheetProps {
-  stock: TopGainers | TopLosers;
+  stock: TopStock;
   onClose: () => void;
 }
 

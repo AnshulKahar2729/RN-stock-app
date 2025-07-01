@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TopStock } from '../types/stock';
 import { useNavigation } from '@react-navigation/native';
+import { formatCurrency } from '../utils';
 
 interface TopStockCardProps {
   stock: TopStock;
@@ -58,9 +59,8 @@ const TopStockCard: React.FC<TopStockCardProps> = memo(({ stock }) => {
 
       {/* Stock Price with emphasis */}
       <View style={styles.priceRow}>
-        <Text style={styles.dollarSign}>$</Text>
-        <Text style={styles.stockPrice}>
-          {typeof stock.price === 'string' ? stock.price : stock.price || '0.00'}
+          <Text style={styles.stockPrice}>
+          {typeof stock.price === 'string' ? formatCurrency(stock.price) : formatCurrency(stock.price) || '0.00'}
         </Text>
       </View>
 
@@ -85,32 +85,32 @@ TopStockCard.displayName = 'TopStockCard';
 const styles = StyleSheet.create({
   stockCard: {
     flex: 1,
-    margin: 8,
-    padding: 16,
+    margin: 4, // reduced
+    padding: 10, // reduced
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 1,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
     position: 'relative',
     overflow: 'hidden',
-    minHeight: 140,
-  },
+    minHeight: 90, // further reduced
+  },  
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   stockIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -131,8 +131,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     opacity: 0.8,
   },
-
-
   stockTicker: {
     fontSize: 16,
     fontWeight: '700',
@@ -144,12 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 8,
   },
-  dollarSign: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-    marginRight: 2,
-  },
+
   stockPrice: {
     fontSize: 20,
     fontWeight: '800',

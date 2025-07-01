@@ -62,9 +62,12 @@ const HomeScreen = ({ navigation }: any) => {
   const displayedLosers = useMemo(() => losers.slice(0, 4), [losers]);
 
   // Memoized navigation handlers
-  const navigateToViewAll = useCallback((type: 'gainers' | 'losers') => {
-    navigation?.navigate?.('ViewAll', { type });
-  }, [navigation]);
+  const navigateToViewAll = useCallback(
+    (type: 'gainers' | 'losers') => {
+      navigation?.navigate?.('ViewAll', { type });
+    },
+    [navigation],
+  );
 
   const getItemLayout = useCallback(
     (data: any, index: number) => ({
@@ -207,106 +210,6 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     fontWeight: '500',
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#212529',
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6c757d',
-    fontWeight: '500',
-  },
-  searchContainer: {
-    marginLeft: 16,
-  },
-  searchInput: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#212529',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    width: 140,
-  },
-  errorContainer: {
-    backgroundColor: '#fee',
-    marginHorizontal: 20,
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#dc3545',
-  },
-  errorText: {
-    color: '#721c24',
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  retryButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
-  },
-  summaryCardTitle: {
-    fontSize: 14,
-    color: '#6c757d',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  summaryCardValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
   section: {
     paddingHorizontal: 10,
     paddingTop: 12,
@@ -319,7 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#212529',
     marginBottom: 2,
