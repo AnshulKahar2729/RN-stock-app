@@ -2,7 +2,7 @@ import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity, Statu
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { Watchlist } from '../../types';
+import { Watchlist } from '../../types/stock';
 import { useWatchlist } from '../../context/WatchlistContext';
 import StockCard from '../../components/TopStockCard';
 import Icon from 'react-native-vector-icons/MaterialIcons';

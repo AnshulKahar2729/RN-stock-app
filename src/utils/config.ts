@@ -1,4 +1,4 @@
 export const config = {
-  API_KEY: process.env.API_KEY,
+  API_KEY: process.env.API_KEY || 'P4O5RHGSK19U90Z6',
   BASE_URL: 'https://www.alphavantage.co/query',
 };

@@ -29,7 +29,10 @@ const HomeStackNavigator = () => (
 // Watchlist Stack Navigator
 const WatchlistStackNavigator = () => (
   <WatchlistStack.Navigator screenOptions={{ headerShown: false }}>
-    <WatchlistStack.Screen name="WatchlistMain" component={WatchlistHomeScreen} />
+    <WatchlistStack.Screen
+      name="WatchlistMain"
+      component={WatchlistHomeScreen}
+    />
     <WatchlistStack.Screen name="Product" component={ProductScreen} />
     <WatchlistStack.Screen name="ViewAll" component={ViewAllScreen} />
     <WatchlistStack.Screen name="WatchlistDetail" component={WatchlistScreen} />
@@ -40,7 +43,7 @@ const WatchlistStackNavigator = () => (
 const TabNavigator = React.memo(() => {
   const tabBarIcon = (
     { focused, color, size }: { focused: boolean; color: string; size: number },
-    routeName: string
+    routeName: string,
   ) => {
     let iconName: string;
     if (routeName === 'HomeTab') {
@@ -56,7 +59,7 @@ const TabNavigator = React.memo(() => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: (props) => tabBarIcon(props, route.name),
+        tabBarIcon: props => tabBarIcon(props, route.name),
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
         headerShown: false,

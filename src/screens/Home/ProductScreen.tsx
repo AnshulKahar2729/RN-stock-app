@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   View,
   Text,
@@ -10,40 +10,16 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useStockOverview } from '../../hooks/useStock';
+import { useStockOverview, useTimeSeriesDaily } from '../../hooks/useStock';
 import { formatCurrency, formatPercentage, formatValue } from '../../utils';
+import { TimeSeriesDailyChart } from '../../components/TimeSeriesDailyChart';
 
 const ProductScreen = () => {
   const route = useRoute<RouteProp<{ params: { ticker: string } }, 'params'>>();
   const { ticker } = route.params;
-  const { data: overview, isLoading } = useStockOverview(ticker);
-
-  const DataRow = ({
-    label,
-    value,
-    icon,
-  }: {
-    label: string;
-    value: string;
-    icon?: string;
-  }) => (
-    <View style={styles.dataRow}>
-      <View style={styles.labelContainer}>
-        {icon && (
-          <Icon name={icon} size={16} color="#6B7280" style={styles.icon} />
-        )}
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <Text style={styles.value}>{value}</Text>
-    </View>
-  );
-
-  const SectionHeader = ({ title, icon }: { title: string; icon: string }) => (
-    <View style={styles.sectionHeader}>
-      <Icon name={icon} size={20} color="#374151" />
-      <Text style={styles.sectionTitle}>{title}</Text>
-    </View>
-  );
+  const { data: overview, isLoading, isError } = useStockOverview(ticker);
+  const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading, isError: isTimeSeriesDailyError } = useTimeSeriesDaily(ticker);
+  console.log('timeSeriesDaily', timeSeriesDaily);
 
   if (isLoading) {
     return (
@@ -51,6 +27,17 @@ const ProductScreen = () => {
         <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error loading stock data</Text>
         </View>
       </SafeAreaView>
     );
@@ -73,10 +60,23 @@ const ProductScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Chart Placeholder - Commented out as requested */}
-        {/* <View style={styles.chartContainer}>
-          <Text>Chart Component Will Go Here</Text>
-        </View> */}
+        {isTimeSeriesDailyLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        )}
+        
+        {isTimeSeriesDailyError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Error loading time series daily</Text>
+          </View>
+        )}
+        
+        {/* {timeSeriesDaily && ( */}
+          <View style={styles.chartContainer}>
+            <TimeSeriesDailyChart data={timeSeriesDaily || {}} ticker={ticker} />
+          </View>
+        {/* )} */}
 
         {/* Price Range */}
         <View style={styles.section}>
@@ -197,6 +197,25 @@ const ProductScreen = () => {
   );
 };
 
+const DataRow = memo(({ label, value, icon }: { label: string; value: string; icon?: string }) => (
+  <View style={styles.dataRow}>
+    <View style={styles.labelContainer}>
+      {icon && (
+        <Icon name={icon} size={16} color="#6B7280" style={styles.icon} />
+      )}
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <Text style={styles.value}>{value}</Text>
+  </View>
+));
+
+const SectionHeader = memo(({ title, icon }: { title: string; icon: string }) => (
+  <View style={styles.sectionHeader}>
+    <Icon name={icon} size={20} color="#374151" />
+    <Text style={styles.sectionTitle}>{title}</Text>
+  </View>
+));
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -212,6 +231,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
     fontSize: 16,
     color: '#6B7280',
   },
@@ -297,6 +325,11 @@ const styles = StyleSheet.create({
   },
   bookmarkIcon: {
     padding: 10,
+  },
+  chartContainer: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
 });
 
