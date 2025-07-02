@@ -1,24 +1,195 @@
-export const formatPercentage = (value: string) => {
-    if (!value || value === 'None') return 'N/A';
-    const num = parseFloat(value);
-    return `${(num * 100).toFixed(2)}%`;
-  };
+// utils/formatUtils.ts - Safe formatting utilities
+export const safeParseFloat = (
+  value: string | number | null | undefined,
+): number => {
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
 
-export const formatValue = (value: string) => {
-    if (!value || value === 'None') return 'N/A';
-    return value;
-  };
+  const str = String(value).trim();
 
-export const formatCurrency = (value: string) => {
-    if (!value || value === 'None') return 'N/A';
-    const num = parseFloat(value);
-    if (num >= 1e12) return `₹${(num / 1e12).toFixed(2)}T`;
-    if (num >= 1e9) return `₹${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `₹${(num / 1e6).toFixed(2)}M`;
-    if (num >= 1e3) return `₹${(num / 1e3).toFixed(2)}K`;
+  // Handle common invalid values from APIs
+  if (
+    str === 'N/A' ||
+    str === 'NaN' ||
+    str === 'None' ||
+    str === '--' ||
+    str === 'null' ||
+    str === 'undefined'
+  ) {
+    return 0;
+  }
 
-    return `₹${num.toFixed(2)}`;
-  };
+  // Remove any non-numeric characters except decimal point and minus sign
+  const cleanStr = str.replace(/[^0-9.-]/g, '');
+
+  const parsed = parseFloat(cleanStr);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+export const formatCurrency = (
+  value: string | number | null | undefined,
+): string => {
+  const numValue = safeParseFloat(value);
+
+  if (numValue === 0) {
+    return 'N/A';
+  }
+
+  try {
+    // Handle large numbers with abbreviations
+    if (Math.abs(numValue) >= 1e12) {
+      return `$${(numValue / 1e12).toFixed(2)}T`;
+    } else if (Math.abs(numValue) >= 1e9) {
+      return `$${(numValue / 1e9).toFixed(2)}B`;
+    } else if (Math.abs(numValue) >= 1e6) {
+      return `$${(numValue / 1e6).toFixed(2)}M`;
+    } else if (Math.abs(numValue) >= 1e3) {
+      return `$${(numValue / 1e3).toFixed(2)}K`;
+    }
+
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numValue);
+  } catch (error) {
+    console.warn('Error formatting currency:', error);
+    return '$0.00';
+  }
+};
+
+export const formatPercentage = (
+  value: string | number | null | undefined,
+): string => {
+  const numValue = safeParseFloat(value);
+
+  if (numValue === 0) {
+    return 'N/A';
+  }
+
+  try {
+    // Convert to percentage if the value is a decimal (e.g., 0.05 -> 5%)
+    const percentValue =
+      numValue < 1 && numValue > -1 ? numValue * 100 : numValue;
+
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(percentValue / 100);
+  } catch (error) {
+    console.warn('Error formatting percentage:', error);
+    return '0.00%';
+  }
+};
+
+export const formatValue = (
+  value: string | number | null | undefined,
+): string => {
+  if (value === null || value === undefined || value === '') {
+    return 'N/A';
+  }
+
+  const str = String(value).trim();
+
+  // Handle common invalid values
+  if (
+    str === 'N/A' ||
+    str === 'NaN' ||
+    str === 'None' ||
+    str === '--' ||
+    str === 'null'
+  ) {
+    return 'N/A';
+  }
+
+  // Check if it's a number
+  const numValue = safeParseFloat(str);
+  if (numValue !== 0 && !isNaN(numValue)) {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(numValue);
+    } catch (error) {
+      return str;
+    }
+  }
+
+  // Return as string if not a number
+  return str;
+};
+
+export const formatLargeNumber = (
+  value: string | number | null | undefined,
+): string => {
+  const numValue = safeParseFloat(value);
+
+  if (numValue === 0) {
+    return 'N/A';
+  }
+
+  try {
+    if (Math.abs(numValue) >= 1e12) {
+      return `${(numValue / 1e12).toFixed(2)}T`;
+    } else if (Math.abs(numValue) >= 1e9) {
+      return `${(numValue / 1e9).toFixed(2)}B`;
+    } else if (Math.abs(numValue) >= 1e6) {
+      return `${(numValue / 1e6).toFixed(2)}M`;
+    } else if (Math.abs(numValue) >= 1e3) {
+      return `${(numValue / 1e3).toFixed(2)}K`;
+    }
+
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(numValue);
+  } catch (error) {
+    console.warn('Error formatting large number:', error);
+    return '0';
+  }
+};
+
+// Safe date formatting
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) {
+    return 'N/A';
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch (error) {
+    console.warn('Error formatting date:', error);
+    return 'N/A';
+  }
+};
+
+// Utility to check if a value is valid for display
+export const isValidValue = (value: any): boolean => {
+  if (value === null || value === undefined || value === '') {
+    return false;
+  }
+
+  const str = String(value).trim();
+  return (
+    str !== 'N/A' &&
+    str !== 'NaN' &&
+    str !== 'None' &&
+    str !== '--' &&
+    str !== 'null'
+  );
+};
 
 export type Theme = {
   background: string;

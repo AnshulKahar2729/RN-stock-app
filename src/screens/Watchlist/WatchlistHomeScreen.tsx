@@ -66,7 +66,7 @@ const Header = ({ showCreateForm }: { showCreateForm: () => void }) => {
           </Text>
         </View>
         <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: theme.accent }]}
+          style={[styles.addButton]}
           onPress={showCreateForm}
           activeOpacity={0.8}
         >
@@ -109,7 +109,7 @@ const getStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.accent,
+    backgroundColor: theme.primary,
     shadowColor: theme.shadow.color,
     shadowOffset: theme.shadow.offset,
     shadowOpacity: theme.shadow.opacity,

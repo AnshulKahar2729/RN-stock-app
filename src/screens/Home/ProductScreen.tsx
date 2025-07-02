@@ -10,14 +10,16 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useStockOverview, useTimeSeriesDaily } from '../../hooks/useStock';
+import { useStockOverview, useTimeSeries } from '../../hooks/useStock';
 import {
   formatCurrency,
   formatPercentage,
   formatValue,
   Theme,
+  safeParseFloat,
+  isValidValue,
 } from '../../utils';
-import { TimeSeriesDailyChart } from '../../components/TimeSeriesDailyChart';
+import { TimeSeriesChart } from '../../components/TimeSeriesChart';
 import { useTheme } from '../../context/ThemeContext';
 import AddToWatchlistSheet, {
   AddToWatchlistSheetRef,
@@ -29,26 +31,50 @@ const ProductScreen = () => {
   const route = useRoute<RouteProp<{ params: { ticker: string } }, 'params'>>();
   const { ticker } = route.params;
   const { data: overview, isLoading, isError } = useStockOverview(ticker);
-  const { data: timeSeriesDaily, isLoading: isTimeSeriesDailyLoading } =
-    useTimeSeriesDaily(ticker);
+  const { data: timeSeries } = useTimeSeries(ticker);
+  console.log('timeSeries', timeSeries);
+  console.log('overview', overview);
   const { theme, mode } = useTheme();
-  console.log('timeSeriesDaily', timeSeriesDaily);
   const styles = getStyles(theme);
   const watchlistSheetRef = useRef<AddToWatchlistSheetRef>(null);
   const { watchlists } = useWatchlist();
 
+  // Get the current price safely - try multiple fields
+  const getCurrentPrice = () => {
+    if (!overview) return '';
+
+    // Try different price fields in order of preference
+    const priceFields = [
+      overview['50DayMovingAverage'],
+      overview['200DayMovingAverage'],
+      overview['52WeekHigh'],
+      overview['BookValue'],
+    ];
+
+    for (const field of priceFields) {
+      if (isValidValue(field)) {
+        const parsed = safeParseFloat(field);
+        if (parsed > 0) {
+          return String(parsed);
+        }
+      }
+    }
+
+    return '';
+  };
+
   // Construct a minimal TopStock object from available data
   const stock: TopStock = {
     ticker,
-    price: String(overview?.['50DayMovingAverage'] || ''),
+    price: getCurrentPrice(),
     change_amount: '', // You can enhance this with real data if available
     change_percentage: '', // You can enhance this with real data if available
     volume: '', // You can enhance this with real data if available
   };
 
   // see if the stock is already in any watchlist
-  const isInWatchlist = watchlists.some((watchlist) =>
-    watchlist.stocks.some((stock) => stock.ticker === ticker),
+  const isInWatchlist = watchlists.some(watchlist =>
+    watchlist.tickers?.some(stock => stock === ticker),
   );
 
   const handleBookmarkPress = useCallback(() => {
@@ -96,28 +122,65 @@ const ProductScreen = () => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.ticker}>{ticker.toUpperCase()}</Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.ticker}>{ticker.toUpperCase()}</Text>
+            {overview?.Name && (
+              <Text style={styles.companyName} numberOfLines={2}>
+                {overview.Name}
+              </Text>
+            )}
+          </View>
 
-          {/* Book mark icon */}
-          <TouchableOpacity style={styles.bookmarkIcon} onPress={handleBookmarkPress}>
-            <Icon name={isInWatchlist ? 'bookmark' : 'bookmark-outline'} size={24} color={theme.text} />
+          {/* Bookmark icon */}
+          <TouchableOpacity
+            style={styles.bookmarkIcon}
+            onPress={handleBookmarkPress}
+            activeOpacity={0.7}
+          >
+            <Icon
+              name={isInWatchlist ? 'bookmark' : 'bookmark-outline'}
+              size={24}
+              color={isInWatchlist ? theme.primary || '#007AFF' : theme.text}
+            />
           </TouchableOpacity>
         </View>
 
-        {isTimeSeriesDailyLoading && (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading...</Text>
+        {/* Chart Section */}
+        <TimeSeriesChart data={timeSeries?.timeSeries || {}} ticker={ticker} />
+
+        {/* Quick Stats */}
+        {overview && (
+          <View style={styles.quickStatsContainer}>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatLabel}>Market Cap</Text>
+              <Text style={styles.quickStatValue}>
+                {formatCurrency(overview.MarketCapitalization)}
+              </Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatLabel}>P/E Ratio</Text>
+              <Text style={styles.quickStatValue}>
+                {formatValue(overview.PERatio)}
+              </Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatLabel}>52W High</Text>
+              <Text style={styles.quickStatValue}>
+                {formatCurrency(overview['52WeekHigh'])}
+              </Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatLabel}>52W Low</Text>
+              <Text style={styles.quickStatValue}>
+                {formatCurrency(overview['52WeekLow'])}
+              </Text>
+            </View>
           </View>
         )}
-
-        {/* {timeSeriesDaily && ( */}
-        <View style={styles.chartContainer}>
-          <TimeSeriesDailyChart data={timeSeriesDaily || {}} ticker={ticker} />
-        </View>
-        {/* )} */}
 
         {/* Price Range */}
         <View style={styles.section}>
@@ -125,15 +188,15 @@ const ProductScreen = () => {
           <View style={styles.priceRangeContainer}>
             <DataRow
               label="52W Low"
-              value={formatCurrency(overview?.['52WeekLow'] || '')}
+              value={formatCurrency(overview?.['52WeekLow'])}
             />
             <DataRow
               label="Current Price"
-              value={formatCurrency(overview?.['50DayMovingAverage'] || '')}
+              value={formatCurrency(getCurrentPrice())}
             />
             <DataRow
               label="52W High"
-              value={formatCurrency(overview?.['52WeekHigh'] || '')}
+              value={formatCurrency(overview?.['52WeekHigh'])}
             />
           </View>
         </View>
@@ -143,27 +206,27 @@ const ProductScreen = () => {
           <SectionHeader title="Key Metrics" icon="bar-chart-outline" />
           <DataRow
             label="Market Cap"
-            value={formatCurrency(overview?.MarketCapitalization || '')}
+            value={formatCurrency(overview?.MarketCapitalization)}
             icon="business-outline"
           />
           <DataRow
             label="P/E Ratio"
-            value={formatValue(overview?.PERatio || '')}
+            value={formatValue(overview?.PERatio)}
             icon="calculator-outline"
           />
           <DataRow
             label="Beta"
-            value={formatValue(overview?.Beta || '')}
+            value={formatValue(overview?.Beta)}
             icon="pulse-outline"
           />
           <DataRow
             label="Dividend Yield"
-            value={formatPercentage(overview?.DividendYield || '')}
+            value={formatPercentage(overview?.DividendYield)}
             icon="cash-outline"
           />
           <DataRow
             label="Profit Margin"
-            value={formatPercentage(overview?.ProfitMargin || '')}
+            value={formatPercentage(overview?.ProfitMargin)}
             icon="trending-up-outline"
           />
         </View>
@@ -176,27 +239,27 @@ const ProductScreen = () => {
           />
           <DataRow
             label="Sector"
-            value={formatValue(overview?.Sector || '')}
+            value={formatValue(overview?.Sector)}
             icon="layers-outline"
           />
           <DataRow
             label="Industry"
-            value={formatValue(overview?.Industry || '')}
+            value={formatValue(overview?.Industry)}
             icon="construct-outline"
           />
           <DataRow
             label="Country"
-            value={formatValue(overview?.Country || '')}
+            value={formatValue(overview?.Country)}
             icon="location-outline"
           />
           <DataRow
             label="Exchange"
-            value={formatValue(overview?.Exchange || '')}
+            value={formatValue(overview?.Exchange)}
             icon="swap-horizontal-outline"
           />
           <DataRow
             label="Currency"
-            value={formatValue(overview?.Currency || '')}
+            value={formatValue(overview?.Currency)}
             icon="card-outline"
           />
         </View>
@@ -206,22 +269,22 @@ const ProductScreen = () => {
           <SectionHeader title="Financial Ratios" icon="analytics-outline" />
           <DataRow
             label="EPS"
-            value={formatValue(overview?.EPS || '')}
+            value={formatValue(overview?.EPS)}
             icon="stats-chart-outline"
           />
           <DataRow
             label="Book Value"
-            value={formatValue(overview?.BookValue || '')}
+            value={formatValue(overview?.BookValue)}
             icon="library-outline"
           />
           <DataRow
             label="ROE (TTM)"
-            value={formatPercentage(overview?.ReturnOnEquityTTM || '')}
+            value={formatPercentage(overview?.ReturnOnEquityTTM)}
             icon="arrow-up-circle-outline"
           />
           <DataRow
             label="ROA (TTM)"
-            value={formatPercentage(overview?.ReturnOnAssetsTTM || '')}
+            value={formatPercentage(overview?.ReturnOnAssetsTTM)}
             icon="pie-chart-outline"
           />
         </View>
@@ -234,6 +297,7 @@ const ProductScreen = () => {
           </View>
         )}
       </ScrollView>
+
       {/* AddToWatchlistSheet Bottom Sheet */}
       <AddToWatchlistSheet
         ref={watchlistSheetRef}
@@ -252,7 +316,12 @@ const DataRow = memo(
       <View style={styles.dataRow}>
         <View style={styles.labelContainer}>
           {icon && (
-            <Icon name={icon} size={16} color="#6B7280" style={styles.icon} />
+            <Icon
+              name={icon}
+              size={16}
+              color={theme.subtext}
+              style={styles.icon}
+            />
           )}
           <Text style={styles.label}>{label}</Text>
         </View>
@@ -280,10 +349,12 @@ const getStyles = (theme: Theme) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      padding: 10,
     },
     scrollView: {
       flex: 1,
+    },
+    scrollViewContent: {
+      paddingBottom: 20,
     },
     loadingContainer: {
       flex: 1,
@@ -304,14 +375,16 @@ const getStyles = (theme: Theme) =>
       color: theme.subtext,
     },
     header: {
-      // padding: ,
-      padding: 6,
-      backgroundColor: theme.background,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 12,
+      backgroundColor: theme.background,
+    },
+    headerContent: {
+      flex: 1,
     },
     ticker: {
       fontSize: theme.font.size.xxl,
@@ -323,15 +396,56 @@ const getStyles = (theme: Theme) =>
       fontSize: theme.font.size.md,
       color: theme.subtext,
       fontWeight: '400' as any,
+      lineHeight: 18,
+    },
+    bookmarkIcon: {
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: theme.card,
+      marginLeft: 12,
+    },
+    chartLoadingContainer: {
+      height: 300,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      marginHorizontal: 16,
+      marginVertical: 12,
+      borderRadius: 12,
+    },
+    quickStatsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: theme.card,
+      marginHorizontal: 16,
+      marginVertical: 8,
+      borderRadius: 12,
+    },
+    quickStat: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    quickStatLabel: {
+      fontSize: theme.font.size.xs,
+      color: theme.subtext,
+      marginBottom: 4,
+      textAlign: 'center',
+    },
+    quickStatValue: {
+      fontSize: theme.font.size.sm,
+      fontWeight: 'bold' as any,
+      color: theme.text,
+      textAlign: 'center',
     },
     section: {
       backgroundColor: theme.card,
-      marginTop: 12,
+      marginHorizontal: 16,
+      marginVertical: 8,
       paddingHorizontal: 20,
       paddingVertical: 20,
-      borderTopWidth: 1,
-      borderBottomWidth: 1,
-      borderColor: theme.border,
+      borderRadius: 12,
     },
     sectionHeader: {
       flexDirection: 'row',
@@ -339,7 +453,7 @@ const getStyles = (theme: Theme) =>
       marginBottom: 16,
       paddingBottom: 8,
       borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      borderBottomColor: theme.border,
     },
     sectionTitle: {
       fontSize: theme.font.size.lg,
@@ -353,7 +467,7 @@ const getStyles = (theme: Theme) =>
       alignItems: 'center',
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      borderBottomColor: theme.border,
     },
     labelContainer: {
       flexDirection: 'row',
@@ -383,14 +497,6 @@ const getStyles = (theme: Theme) =>
       lineHeight: 20,
       color: theme.subtext,
       marginTop: 8,
-    },
-    bookmarkIcon: {
-      padding: 10,
-    },
-    chartContainer: {
-      marginTop: 12,
-      paddingHorizontal: 20,
-      paddingVertical: 20,
     },
   });
 

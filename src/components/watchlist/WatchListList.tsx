@@ -63,7 +63,7 @@ import { Theme } from '../../utils';
           their performance
         </Text>
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: theme.accent }]}
+          style={[styles.primaryButton]}
           onPress={showCreateForm}
           activeOpacity={0.8}
         >
@@ -126,15 +126,15 @@ import { Theme } from '../../utils';
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 28,
-      paddingVertical: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
       borderRadius: 12,
       shadowColor: theme.shadow.color,
       shadowOffset: theme.shadow.offset,
       shadowOpacity: theme.shadow.opacity,
       shadowRadius: theme.shadow.radius,
       elevation: theme.shadow.elevation,
-      backgroundColor: theme.accent,
+      backgroundColor: theme.primary,
     },
     buttonIcon: {
       marginRight: 8,

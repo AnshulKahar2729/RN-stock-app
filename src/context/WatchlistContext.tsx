@@ -28,6 +28,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({
     const loadWatchlists = async () => {
       try {
         const data = await AsyncStorage.getItem(WATCHLISTS_STORAGE_KEY);
+        console.log('data', data);
         if (data) {
           setWatchlists(JSON.parse(data));
         }
@@ -59,34 +60,35 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({
       Alert.alert('Error', 'Watchlist name must be unique');
       return '';
     } else {
-      setWatchlists(prev => [...prev, { id: newId, name, stocks: [] }]);
+      setWatchlists(prev => [...prev, { id: newId, name, tickers: [] }]);
       return newId;
     }
   };
 
   const addStockToWatchlist = (watchlistId: string, stock: TopStock) => {
-    // check if the stock is already in the watchlist, if yes then remove it from the watchlist
-    const isInWatchlist = watchlists.some(watchlist =>
-      watchlist.stocks.some(s => s.ticker === stock.ticker),
-    );
-    if (isInWatchlist) {
-      removeStockFromWatchlist(watchlistId, stock.ticker);
-    }
-    setWatchlists(prev =>
-      prev.map(wl =>
-        wl.id === watchlistId ? { ...wl, stocks: [...wl.stocks, stock] } : wl,
-      ),
-    );
-  };
-
-  const removeStockFromWatchlist = (watchlistId: string, symbol: string) => {
-    console.log('removeStockFromWatchlist', watchlistId, symbol);
+    console.log('addStockToWatchlist', watchlistId, stock);
+    console.log('watchlists', watchlists);
     setWatchlists(prev =>
       prev.map(wl =>
         wl.id === watchlistId
           ? {
               ...wl,
-              stocks: wl.stocks.filter((s: TopStock) => s.ticker !== symbol),
+              tickers: wl?.tickers?.includes(stock.ticker)
+                ? wl?.tickers
+                : [...wl?.tickers, stock.ticker],
+            }
+          : wl,
+      ),
+    );
+  };
+
+  const removeStockFromWatchlist = (watchlistId: string, symbol: string) => {
+    setWatchlists(prev =>
+      prev.map(wl =>
+        wl.id === watchlistId
+          ? {
+              ...wl,
+              tickers: wl?.tickers?.filter((t: string) => t !== symbol),
             }
           : wl,
       ),

@@ -17,6 +17,7 @@ import StockCard from '../../components/TopStockCard';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../../context/ThemeContext';
 import { Theme } from '../../utils';
+import { useStockOverview } from '../../hooks/useStock';
 
 const getStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -198,33 +199,10 @@ export default function WatchlistScreen() {
     }
   }, [id, watchlists]);
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <View
-        style={[styles.emptyIconContainer, { backgroundColor: theme.card }]}
-      >
-        <Icon name="trending-up" size={48} color={theme.subtext} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>
-        No stocks yet
-      </Text>
-      <Text style={[styles.emptySubtitle, { color: theme.subtext }]}>
-        Add stocks to your watchlist to track their performance
-      </Text>
-    </View>
-  );
+  console.log("selected watchlist", watchlist);
 
   const renderStockList = () => (
-    <FlatList
-      data={watchlist?.stocks}
-      renderItem={({ item }) => <StockCard stock={item} />}
-      keyExtractor={item => item.ticker}
-      numColumns={2}
-      columnWrapperStyle={styles.stockListColumn}
-      contentContainerStyle={styles.stockListContent}
-      showsVerticalScrollIndicator={false}
-      ListEmptyComponent={renderEmptyState}
-    />
+    <WatchlistStockList tickers={watchlist?.tickers || []} />
   );
 
   if (!watchlist) {
@@ -257,7 +235,7 @@ export default function WatchlistScreen() {
         barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={theme.background}
       />
-      <Header title={title} stockCount={watchlist.stocks?.length || 0} />
+      <Header title={title} stockCount={watchlist.tickers?.length || 0} />
       <View style={styles.content}>
         {/* Stock List */}
         <View style={styles.stockList}>{renderStockList()}</View>
@@ -270,7 +248,7 @@ function Header({ title, stockCount }: { title: string; stockCount: number }) {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = getStyles(theme);
-    return (
+  return (
     <View
       style={[
         styles.header,
@@ -293,4 +271,62 @@ function Header({ title, stockCount }: { title: string; stockCount: number }) {
       </View>
     </View>
   );
+}
+
+function WatchlistStockList({ tickers }: { tickers: string[] }) {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
+  // Render each ticker as a TopStockCard with real-time data
+  return (
+    <FlatList
+      data={tickers}
+      renderItem={({ item }) => <WatchlistStockCard ticker={item} />}
+      keyExtractor={item => item}
+      numColumns={2}
+      columnWrapperStyle={styles.stockListColumn}
+      contentContainerStyle={styles.stockListContent}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <View style={styles.emptyContainer}>
+          <View style={[styles.emptyIconContainer, { backgroundColor: theme.card }]}> 
+            <Icon name="trending-up" size={48} color={theme.subtext} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>No stocks yet</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.subtext }]}>Add stocks to your watchlist to track their performance</Text>
+        </View>
+      )}
+    />
+  );
+}
+
+function WatchlistStockCard({ ticker }: { ticker: string }) {
+  const { data: overview, isLoading } = useStockOverview(ticker);
+  if (isLoading || !overview) return null;
+
+  // Use the same logic as ProductScreen to get the current price
+  const getCurrentPrice = () => {
+    if (!overview) return '';
+    const priceFields = [
+      overview['50DayMovingAverage'],
+      overview['200DayMovingAverage'],
+      overview['52WeekHigh'],
+      overview['BookValue'],
+    ];
+    for (const field of priceFields) {
+      if (field && !isNaN(Number(field)) && Number(field) > 0) {
+        return String(field);
+      }
+    }
+    return '';
+  };
+
+  const stock = {
+    ticker,
+    price: getCurrentPrice(),
+    change_amount: '', // Could be enhanced with time series
+    change_percentage: '', // Could be enhanced with time series
+    volume: '', // Could be enhanced with time series
+  };
+  return <StockCard stock={stock} />;
 }

@@ -9,7 +9,7 @@ export interface TopStock {
 export interface Watchlist {
   id: string;
   name: string;
-  stocks: TopStock[];
+  tickers: string[];
 }
 
 export type StockSearch = {
@@ -82,3 +82,5 @@ export type StockOverview = {
   DividendDate: string;
   ExDividendDate: string;
 };
+
+export type TimePeriod = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';

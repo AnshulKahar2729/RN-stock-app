@@ -8,13 +8,12 @@ import {
   StatusBar,
   Animated,
 } from 'react-native';
-import { fetchTopGainers, fetchTopLosers } from '../../services/api';
-import TopStockCard from '../../components/TopStockCard';
-import { TopStock } from '../../types/stock';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { Theme } from '../../utils';
 import { useTheme } from '../../context/ThemeContext';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGetTopGainersLosers } from '../../hooks/useStock';
+import TopStockCard from '../../components/TopStockCard';
 
 const PAGE_SIZE = 10;
 
@@ -33,27 +32,23 @@ const getStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 20,
-      paddingBottom: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+      paddingHorizontal: 8,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
+      backgroundColor: theme.header,
     },
     backButton: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.card,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
-      ...theme.shadow,
-      shadowColor: theme.shadow.color,
-      shadowOffset: theme.shadow.offset,
-      shadowOpacity: theme.shadow.opacity,
-      shadowRadius: theme.shadow.radius,
-      elevation: theme.shadow.elevation,
     },
     title: {
-      fontSize: theme.font.size.xl,
+      fontSize: theme.font.size.lg,
       fontWeight: theme.font.weight.bold as any,
       color: theme.text,
       flex: 1,
@@ -215,25 +210,19 @@ const getStyles = (theme: Theme) =>
   });
 
 const ViewAllScreen: React.FC = () => {
+  const navigation = useNavigation();
   const route =
     useRoute<RouteProp<{ params: { type: 'gainers' | 'losers' } }, 'params'>>();
-  const [stocks, setStocks] = useState<TopStock[]>([]);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const { theme, mode } = useTheme();
   const styles = getStyles(theme);
-  const navigation = useNavigation();
   const [progressAnim] = useState(new Animated.Value(0));
 
-  useEffect(() => {
-    setLoading(true);
-    const fetch =
-      route.params.type === 'gainers' ? fetchTopGainers : fetchTopLosers;
-    fetch().then(data => {
-      setStocks(data);
-      setLoading(false);
-    });
-  }, [route.params.type]);
+  const {
+    data: stocks = [],
+    isLoading,
+    isError,
+  } = useGetTopGainersLosers(route.params.type);
 
   // Pagination
   const paginatedStocks = stocks.slice(
@@ -254,10 +243,20 @@ const ViewAllScreen: React.FC = () => {
   }, [page, totalPages, progressAnim]);
 
   const renderEmptyComponent = () => {
-    if (loading) {
+    if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading stocks...</Text>
+        </View>
+      );
+    }
+    if (isError) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Icon name="error-outline" size={48} color={theme.subtext} />
+          <Text style={styles.emptyText}>
+            Failed to load {route.params.type}. Please try again later.
+          </Text>
         </View>
       );
     }
@@ -277,36 +276,36 @@ const ViewAllScreen: React.FC = () => {
   const getQuickJumpPages = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
       pages.push(1);
-      
+
       if (page > 3) {
         pages.push('...');
       }
-      
+
       const start = Math.max(2, page - 1);
       const end = Math.min(totalPages - 1, page + 1);
-      
+
       for (let i = start; i <= end; i++) {
         if (i !== 1 && i !== totalPages) {
           pages.push(i);
         }
       }
-      
+
       if (page < totalPages - 2) {
         pages.push('...');
       }
-      
+
       if (totalPages > 1) {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -345,10 +344,10 @@ const ViewAllScreen: React.FC = () => {
                 disabled={!canGoPrevious}
                 activeOpacity={0.7}
               >
-                <Icon 
-                  name="chevron-left" 
-                  size={16} 
-                  color={!canGoPrevious ? theme.subtext : theme.card} 
+                <Icon
+                  name="chevron-left"
+                  size={16}
+                  color={!canGoPrevious ? theme.subtext : theme.card}
                 />
                 <Text
                   style={[
@@ -377,10 +376,10 @@ const ViewAllScreen: React.FC = () => {
                 >
                   Next
                 </Text>
-                <Icon 
-                  name="chevron-right" 
-                  size={16} 
-                  color={!canGoNext ? theme.subtext : theme.card} 
+                <Icon
+                  name="chevron-right"
+                  size={16}
+                  color={!canGoNext ? theme.subtext : theme.card}
                 />
               </TouchableOpacity>
             </View>
@@ -396,7 +395,9 @@ const ViewAllScreen: React.FC = () => {
                     styles.quickJumpButton,
                     pageNum === page && styles.quickJumpButtonActive,
                   ]}
-                  onPress={() => typeof pageNum === 'number' && setPage(pageNum)}
+                  onPress={() =>
+                    typeof pageNum === 'number' && setPage(pageNum)
+                  }
                   disabled={pageNum === '...'}
                   activeOpacity={0.7}
                 >
@@ -424,21 +425,21 @@ const ViewAllScreen: React.FC = () => {
         barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={theme.background}
       />
+      <View style={styles.header}>
+        {/* Back button */}
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Icon name="arrow-back" size={20} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={styles.title}>
+          {route.params.type === 'gainers' ? 'Top Gainers' : 'Top Losers'}
+        </Text>
+      </View>
 
       <View style={styles.contentContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <Icon name="arrow-back" size={20} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={styles.title}>
-            {route.params.type === 'gainers' ? 'Top Gainers' : 'Top Losers'}
-          </Text>
-        </View>
-
         <View style={styles.listContainer}>
           <FlatList
             data={paginatedStocks}
@@ -454,7 +455,7 @@ const ViewAllScreen: React.FC = () => {
             contentContainerStyle={{ flexGrow: 1 }}
           />
         </View>
-        
+
         {renderPaginationControls()}
       </View>
     </View>
