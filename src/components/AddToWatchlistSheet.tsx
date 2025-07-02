@@ -40,7 +40,7 @@ const AddToWatchlistSheet = forwardRef<
   AddToWatchlistSheetRef,
   AddToWatchlistSheetProps
 >(({ stock, onClose }, ref) => {
-  const { watchlists, addWatchlist, addStockToWatchlist } = useWatchlist();
+  const { watchlists, addWatchlist, addStockToWatchlist, removeStockFromWatchlist } = useWatchlist();
   const [newListName, setNewListName] = useState('');
   const { theme } = useTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -95,30 +95,54 @@ const AddToWatchlistSheet = forwardRef<
     }
   }, [newListName, addWatchlist, addStockToWatchlist, stock, hide]);
 
-  const handleAddToExisting = useCallback(
+  // Helper to check if stock is in a watchlist
+  const isStockInWatchlist = useCallback(
     (watchlistId: string) => {
-      addStockToWatchlist(watchlistId, stock);
+      const wl = watchlists.find(wl => wl.id === watchlistId);
+      return wl ? wl.tickers.includes(stock.ticker) : false;
+    },
+    [watchlists, stock.ticker],
+  );
+
+  const handleToggleWatchlist = useCallback(
+    (watchlistId: string) => {
+      if (isStockInWatchlist(watchlistId)) {
+        removeStockFromWatchlist(watchlistId, stock.ticker);
+      } else {
+        addStockToWatchlist(watchlistId, stock);
+      }
       hide();
     },
-    [addStockToWatchlist, stock, hide],
+    [isStockInWatchlist, removeStockFromWatchlist, addStockToWatchlist, stock, hide],
   );
 
   const renderWatchlistItem = useCallback(
-    ({ item }: { item: any }) => (
-      <TouchableOpacity
-        style={getStyles(theme).watchlistItem}
-        onPress={() => handleAddToExisting(item.id)}
-      >
-        <View style={getStyles(theme).watchlistItemContent}>
-          <Text style={getStyles(theme).watchlistName}>{item.name}</Text>
-          <Text style={getStyles(theme).stockCount}>
-            {item.stocks.length} stocks
+    ({ item }: { item: any }) => {
+      const selected = isStockInWatchlist(item.id);
+      return (
+        <TouchableOpacity
+          style={[
+            getStyles(theme).watchlistItem,
+            selected && getStyles(theme).watchlistItemSelected,
+          ]}
+          onPress={() => handleToggleWatchlist(item.id)}
+        >
+          <View style={getStyles(theme).watchlistItemContent}>
+            <Text style={getStyles(theme).watchlistName}>{item.name}</Text>
+            <Text style={getStyles(theme).stockCount}>
+              {item.tickers.length} stocks
+            </Text>
+          </View>
+          <Text style={[
+            getStyles(theme).addIcon,
+            selected && getStyles(theme).removeIcon,
+          ]}>
+            {selected ? '✓' : '+'}
           </Text>
-        </View>
-        <Text style={getStyles(theme).addIcon}>+</Text>
-      </TouchableOpacity>
-    ),
-    [handleAddToExisting, theme],
+        </TouchableOpacity>
+      );
+    },
+    [handleToggleWatchlist, theme, isStockInWatchlist],
   );
 
   const renderBottomSheetContent = () => (
@@ -231,6 +255,12 @@ const getStyles = (theme: Theme) =>
       backgroundColor: theme.background,
       borderRadius: 8,
       marginBottom: 8,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    watchlistItemSelected: {
+      backgroundColor: theme.primary + '22', // subtle highlight
+      borderColor: theme.primary,
     },
     watchlistItemContent: {
       flex: 1,
@@ -249,6 +279,9 @@ const getStyles = (theme: Theme) =>
       fontSize: theme.font.size.lg,
       fontWeight: 'bold' as any,
       color: theme.primary,
+    },
+    removeIcon: {
+      color: '#22c55e', // green for remove
     },
     emptyText: {
       textAlign: 'center',

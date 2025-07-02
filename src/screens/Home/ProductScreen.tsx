@@ -1,4 +1,4 @@
-import React, { memo, useRef, useCallback } from 'react';
+import React, { memo, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,13 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useStockOverview, useTimeSeries } from '../../hooks/useStock';
+import { useStockOverview } from '../../hooks/useStock';
 import {
   formatCurrency,
   formatPercentage,
   formatValue,
   Theme,
   safeParseFloat,
-  isValidValue,
 } from '../../utils';
 import { TimeSeriesChart } from '../../components/TimeSeriesChart';
 import { useTheme } from '../../context/ThemeContext';
@@ -31,50 +30,49 @@ const ProductScreen = () => {
   const route = useRoute<RouteProp<{ params: { ticker: string } }, 'params'>>();
   const { ticker } = route.params;
   const { data: overview, isLoading, isError } = useStockOverview(ticker);
-  const { data: timeSeries } = useTimeSeries(ticker);
-  console.log('timeSeries', timeSeries);
   console.log('overview', overview);
   const { theme, mode } = useTheme();
   const styles = getStyles(theme);
   const watchlistSheetRef = useRef<AddToWatchlistSheetRef>(null);
   const { watchlists } = useWatchlist();
 
-  // Get the current price safely - try multiple fields
-  const getCurrentPrice = () => {
+  // Get the current price safely - using correct StockOverview properties
+  const getCurrentPrice = useMemo(() => {
     if (!overview) return '';
 
-    // Try different price fields in order of preference
+    // Priority order for getting current price using actual available properties
     const priceFields = [
-      overview['50DayMovingAverage'],
-      overview['200DayMovingAverage'],
-      overview['52WeekHigh'],
-      overview['BookValue'],
+      overview['50DayMovingAverage'], // 50-day moving average (most current estimate)
+      overview['200DayMovingAverage'], // 200-day moving average
+      overview['52WeekHigh'], // 52-week high as reference
+      overview['BookValue'], // Book value per share
+      overview['AnalystTargetPrice'], // Analyst target price as fallback
     ];
-
+    
     for (const field of priceFields) {
-      if (isValidValue(field)) {
-        const parsed = safeParseFloat(field);
-        if (parsed > 0) {
-          return String(parsed);
-        }
+      const price = safeParseFloat(field);
+      if (price > 0) {
+        return String(price);
       }
     }
 
     return '';
-  };
+  }, [overview]);
 
   // Construct a minimal TopStock object from available data
-  const stock: TopStock = {
+  const stock: TopStock = useMemo(() => ({
     ticker,
-    price: getCurrentPrice(),
+    price: getCurrentPrice,
     change_amount: '', // You can enhance this with real data if available
     change_percentage: '', // You can enhance this with real data if available
     volume: '', // You can enhance this with real data if available
-  };
+  }), [ticker, getCurrentPrice]);
 
-  // see if the stock is already in any watchlist
-  const isInWatchlist = watchlists.some(watchlist =>
-    watchlist.tickers?.some(stock => stock === ticker),
+  // Check if the stock is already in any watchlist
+  const isInWatchlist = useMemo(() => 
+    watchlists.some(watchlist =>
+      watchlist.tickers?.some(stock => stock === ticker)
+    ), [watchlists, ticker]
   );
 
   const handleBookmarkPress = useCallback(() => {
@@ -84,6 +82,17 @@ const ProductScreen = () => {
   const handleCloseWatchlistSheet = useCallback(() => {
     watchlistSheetRef.current?.hide();
   }, []);
+
+  const getCurrentPricePosition = useCallback(() => {
+    const currentPrice = safeParseFloat(getCurrentPrice);
+    const low = safeParseFloat(overview?.['52WeekLow']);
+    const high = safeParseFloat(overview?.['52WeekHigh']);
+
+    if (!currentPrice || !low || !high || high <= low) return 50;
+
+    const position = ((currentPrice - low) / (high - low)) * 100;
+    return Math.max(0, Math.min(100, position));
+  }, [getCurrentPrice, overview]);
 
   if (isLoading) {
     return (
@@ -149,10 +158,10 @@ const ProductScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Chart Section */}
-        <TimeSeriesChart data={timeSeries?.timeSeries || {}} ticker={ticker} />
+        {/* Chart Section - Pass current price to ensure consistency */}
+        <TimeSeriesChart ticker={ticker} currentPrice={getCurrentPrice} />
 
-        {/* Quick Stats */}
+        {/* Quick Stats - Using correct StockOverview properties */}
         {overview && (
           <View style={styles.quickStatsContainer}>
             <View style={styles.quickStat}>
@@ -182,22 +191,36 @@ const ProductScreen = () => {
           </View>
         )}
 
-        {/* Price Range */}
+        {/* Price Range with Visual Bar */}
         <View style={styles.section}>
           <SectionHeader title="Price Range" icon="trending-up-outline" />
-          <View style={styles.priceRangeContainer}>
-            <DataRow
-              label="52W Low"
-              value={formatCurrency(overview?.['52WeekLow'])}
-            />
-            <DataRow
-              label="Current Price"
-              value={formatCurrency(getCurrentPrice())}
-            />
-            <DataRow
-              label="52W High"
-              value={formatCurrency(overview?.['52WeekHigh'])}
-            />
+          <View style={styles.priceRangeVisualContainer}>
+            <View style={styles.priceLabelsRow}>
+              <Text style={styles.priceLabelText}>
+                {formatCurrency(overview?.['52WeekLow'])}
+              </Text>
+              <Text style={styles.priceLabelText}>
+                {formatCurrency(overview?.['52WeekHigh'])}
+              </Text>
+            </View>
+
+            <View style={styles.priceBarContainer}>
+              <View style={styles.priceBar} />
+              <View
+                style={[
+                  styles.currentPriceIndicator,
+                  {
+                    left: `${getCurrentPricePosition()}%`,
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={styles.currentPriceLabel}>
+              <Text style={styles.currentPriceLabelText}>
+                Current: {formatCurrency(getCurrentPrice)}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -497,6 +520,50 @@ const getStyles = (theme: Theme) =>
       lineHeight: 20,
       color: theme.subtext,
       marginTop: 8,
+    },
+    priceRangeVisualContainer: {
+      marginTop: 8,
+    },
+    priceLabelsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    priceLabelText: {
+      fontSize: theme.font.size.sm,
+      color: theme.subtext,
+      fontWeight: '600' as any,
+    },
+    priceBarContainer: {
+      height: 6,
+      backgroundColor: theme.border,
+      borderRadius: 3,
+      marginVertical: 8,
+      position: 'relative',
+    },
+    priceBar: {
+      height: '100%',
+      backgroundColor: theme.primary || '#007AFF',
+      borderRadius: 3,
+    },
+    currentPriceIndicator: {
+      position: 'absolute',
+      top: -4,
+      width: 14,
+      height: 14,
+      backgroundColor: theme.primary || '#007AFF',
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: theme.background,
+    },
+    currentPriceLabel: {
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    currentPriceLabelText: {
+      fontSize: theme.font.size.sm,
+      color: theme.text,
+      fontWeight: 'bold' as any,
     },
   });
 

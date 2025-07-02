@@ -111,9 +111,11 @@ const getStyles = (theme: Theme) =>
     stockListContent: {
       paddingBottom: 20,
     },
-    stockListColumn: {
-      justifyContent: 'space-between',
-      gap: 12,
+    // Updated: Proper wrapper for individual stock cards
+    stockCardWrapper: {
+      flex: 0.5,
+      paddingHorizontal: 6,
+      paddingVertical: 6,
     },
     emptyContainer: {
       flex: 1,
@@ -199,7 +201,7 @@ export default function WatchlistScreen() {
     }
   }, [id, watchlists]);
 
-  console.log("selected watchlist", watchlist);
+  console.log('selected watchlist', watchlist);
 
   const renderStockList = () => (
     <WatchlistStockList tickers={watchlist?.tickers || []} />
@@ -277,23 +279,31 @@ function WatchlistStockList({ tickers }: { tickers: string[] }) {
   const { theme } = useTheme();
   const styles = getStyles(theme);
 
-  // Render each ticker as a TopStockCard with real-time data
   return (
     <FlatList
       data={tickers}
-      renderItem={({ item }) => <WatchlistStockCard ticker={item} />}
+      renderItem={({ item }) => (
+        <View style={styles.stockCardWrapper}>
+          <WatchlistStockCard ticker={item} />
+        </View>
+      )}
       keyExtractor={item => item}
       numColumns={2}
-      columnWrapperStyle={styles.stockListColumn}
       contentContainerStyle={styles.stockListContent}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={() => (
         <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIconContainer, { backgroundColor: theme.card }]}> 
+          <View
+            style={[styles.emptyIconContainer, { backgroundColor: theme.card }]}
+          >
             <Icon name="trending-up" size={48} color={theme.subtext} />
           </View>
-          <Text style={[styles.emptyTitle, { color: theme.text }]}>No stocks yet</Text>
-          <Text style={[styles.emptySubtitle, { color: theme.subtext }]}>Add stocks to your watchlist to track their performance</Text>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>
+            No stocks yet
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: theme.subtext }]}>
+            Add stocks to your watchlist to track their performance
+          </Text>
         </View>
       )}
     />
@@ -301,10 +311,15 @@ function WatchlistStockList({ tickers }: { tickers: string[] }) {
 }
 
 function WatchlistStockCard({ ticker }: { ticker: string }) {
-  const { data: overview, isLoading } = useStockOverview(ticker);
-  if (isLoading || !overview) return null;
+  const { data: overview, isLoading: isOverviewLoading } =
+    useStockOverview(ticker);
+  const { data: timeSeriesData, isLoading: isTimeSeriesLoading } =
+    require('../../hooks/useStock').useTimeSeries(ticker, '1M');
 
-  // Use the same logic as ProductScreen to get the current price
+  if (isOverviewLoading || isTimeSeriesLoading || !overview || !timeSeriesData)
+    return null;
+
+  // Get current price logic (same as before)
   const getCurrentPrice = () => {
     if (!overview) return '';
     const priceFields = [
@@ -321,11 +336,67 @@ function WatchlistStockCard({ ticker }: { ticker: string }) {
     return '';
   };
 
+  // Calculate change_amount and change_percentage from time series data (1M)
+  const safeParseFloat = (
+    value: string | number | null | undefined,
+  ): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    const str = String(value).trim();
+    if (
+      str === 'N/A' ||
+      str === 'NaN' ||
+      str === 'None' ||
+      str === '--' ||
+      str === 'null' ||
+      str === 'undefined'
+    ) {
+      return 0;
+    }
+    const parsed = parseFloat(str);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  type TimeSeriesValue = {
+    '1. open': string;
+    '2. high': string;
+    '3. low': string;
+    '4. close': string;
+    '5. volume': string;
+  };
+
+  // Extract and sort close prices by date ascending
+  const entries = Object.entries(timeSeriesData.timeSeries || {})
+    .map(([date, values]) => {
+      const v = values as TimeSeriesValue;
+      const close = safeParseFloat(v['4. close']);
+      const timestamp = new Date(date).getTime();
+      if (close > 0 && !isNaN(timestamp)) {
+        return { date, close, timestamp };
+      }
+      return null;
+    })
+    .filter(
+      (entry): entry is { date: string; close: number; timestamp: number } =>
+        entry !== null,
+    )
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  let change_amount = '';
+  let change_percentage = '';
+  if (entries.length > 1) {
+    const currentPrice = entries[entries.length - 1].close;
+    const previousPrice = entries[0].close;
+    const change = currentPrice - previousPrice;
+    const percent = previousPrice !== 0 ? (change / previousPrice) * 100 : 0;
+    change_amount = change.toFixed(2);
+    change_percentage = percent.toFixed(2);
+  }
+
   const stock = {
     ticker,
     price: getCurrentPrice(),
-    change_amount: '', // Could be enhanced with time series
-    change_percentage: '', // Could be enhanced with time series
+    change_amount,
+    change_percentage,
     volume: '', // Could be enhanced with time series
   };
   return <StockCard stock={stock} />;
