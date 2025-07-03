@@ -1,97 +1,200 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# StocksApp 📈
 
-# Getting Started
+A modern React Native mobile application for tracking stock market data, managing watchlists, and viewing detailed financial information.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Overview
 
-## Step 1: Start Metro
+StocksApp is a comprehensive stock market tracking application that allows users to monitor top gainers and losers, view detailed stock information with interactive charts, and manage personalized watchlists. Built with React Native and TypeScript for cross-platform compatibility.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## ✨ Features
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### 🏠 Home Screen
+- **Top Gainers & Losers**: Real-time display of best and worst performing stocks
+- **Pull-to-Refresh**: Update stock data with a simple pull gesture
+- **Quick Navigation**: Tap to view detailed stock information
+- **View All**: Paginated views for comprehensive market data
 
-```sh
-# Using npm
+### 📊 Stock Details
+- **Interactive Charts**: Time series charts with multiple timeframes (1D, 1W, 1M, 3M, 6M, 1Y, 5Y)
+- **Company Overview**: Complete company information including sector, industry, and description
+- **Financial Metrics**: Key financial ratios and performance indicators
+- **Price Analysis**: 52-week high/low, moving averages, and price ranges
+- **Quick Stats**: Market cap, P/E ratio, dividend yield, and more
+
+### 📋 Watchlist Management
+- **Multiple Watchlists**: Create and manage multiple custom watchlists
+- **Add to Watchlist**: Easy stock addition via bottom sheet interface
+- **Watchlist Overview**: Quick access to all your tracked stocks
+- **Persistent Storage**: Watchlists saved locally for offline access
+
+### 🎨 User Experience
+- **Dark/Light Theme**: Automatic theme switching support
+- **Lazy Loading**: Optimized performance with lazy-loaded screens
+- **Error Handling**: Graceful error states with retry functionality
+- **Search Functionality**: Find stocks quickly with search capabilities
+- **Responsive Design**: Optimized for various screen sizes
+
+## 🛠️ Tech Stack
+
+### Core Framework
+- **React Native** (0.80.0) - Cross-platform mobile development
+- **TypeScript** (5.0.4) - Type-safe JavaScript
+- **React** (19.1.0) - UI library
+
+### Navigation & State Management
+- **React Navigation** (7.x) - Navigation library with bottom tabs and stack navigation
+- **TanStack Query** (5.x) - Server state management and caching
+- **React Context** - Global state management for themes and watchlists
+
+### UI & Styling
+- **React Native Vector Icons** - Icon library
+- **React Native Gesture Handler** - Gesture recognition
+- **React Native Reanimated** - Smooth animations
+- **React Native Safe Area Context** - Safe area handling
+
+### Charts & Visualization
+- **React Native Chart Kit** - Chart components
+
+### Data & Storage
+- **Axios** - HTTP client for API requests
+- **AsyncStorage** - Local data persistence
+- **TanStack Query Persist Client** - Query result persistence
+
+### Development Tools
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Jest** - Testing framework
+- **Metro** - JavaScript bundler
+- **React Native Config** - Environment configuration
+
+## 📱 Screens
+
+### Main Navigation
+- **Home Tab**
+  - Home Screen - Market overview with top gainers/losers
+  - Product Screen - Detailed stock information
+  - View All Screen - Paginated stock lists
+  - Watchlist Detail Screen - Individual watchlist view
+
+- **Watchlist Tab**
+  - Watchlist Home Screen - All watchlists overview
+  - Product Screen - Stock details from watchlist
+  - View All Screen - Extended watchlist views
+  - Watchlist Detail Screen - Specific watchlist management
+
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js >= 18
+- React Native development environment set up
+- Android Studio (for Android development)
+- Xcode (for iOS development)
+
+### Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd stocksApp
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **iOS Setup** (macOS only)
+   ```bash
+   # Install CocoaPods dependencies
+   bundle install
+   bundle exec pod install
+   cd ios && pod install && cd ..
+   ```
+
+4. **Environment Configuration**
+   ```bash
+   # Create your environment configuration
+   cp .env.example .env
+   # Add your API keys and configuration
+   ```
+
+## 🚀 Running the App
+
+### Start Metro Server
+```bash
 npm start
-
-# OR using Yarn
+# or
 yarn start
 ```
 
-## Step 2: Build and run your app
+### Build and Run
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+#### Android
+```bash
 npm run android
-
-# OR using Yarn
+# or
 yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+#### iOS
+```bash
 npm run ios
-
-# OR using Yarn
+# or
 yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Development Commands
+```bash
+# Reset Metro cache
+npm run reset-cache
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+# Run tests
+npm test
 
-## Step 3: Modify your app
+# Lint code
+npm run lint
+```
 
-Now that you have successfully run the app, let's make changes!
+## 🔧 Configuration
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+The app uses React Native Config for environment management. Create a `.env` file in the root directory with your API configuration:
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+```env
+API_BASE_URL=your_api_endpoint
+API_KEY=your_api_key
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## 🏗️ Architecture
 
-## Congratulations! :tada:
+### Data Flow
+- **TanStack Query** manages server state and caching
+- **React Context** handles global app state (themes, watchlists)
+- **AsyncStorage** provides persistent local storage
+- **Axios** handles all HTTP requests with interceptors
 
-You've successfully run and modified your React Native App. :partying_face:
+## 🧪 Testing
 
-### Now what?
+Run the test suite:
+```bash
+npm test
+# or
+yarn test
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
-# Troubleshooting
+## 🐛 Troubleshooting
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### Common Issues
 
-# Learn More
+- **Metro bundler issues**: Try `npm run reset-cache`
+- **iOS build failures**: Ensure CocoaPods are properly installed
+- **Android build issues**: Check Android SDK and build tools versions
 
-To learn more about React Native, take a look at the following resources:
+For more help, see the [React Native Troubleshooting Guide](https://reactnative.dev/docs/troubleshooting).
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+---
+
+Built with ❤️ using React Native and TypeScript
