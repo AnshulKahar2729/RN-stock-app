@@ -52,7 +52,7 @@ const getStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
       shadowColor: theme.shadow.color,

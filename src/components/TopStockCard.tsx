@@ -26,7 +26,7 @@ const getStyles = (theme: Theme) =>
       elevation: theme.shadow.elevation,
       position: 'relative',
       overflow: 'hidden',
-      minHeight: 90,
+      minHeight: 85,
       backgroundColor: theme.card,
     },
     headerRow: {

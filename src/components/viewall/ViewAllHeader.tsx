@@ -37,7 +37,7 @@ const getStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 20,
-      paddingTop: 16,
+      paddingTop: 12,
       paddingBottom: 8,
       paddingHorizontal: 8,
       borderBottomWidth: 1,

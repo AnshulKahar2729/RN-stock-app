@@ -38,7 +38,7 @@ const WatchlistHeader = memo<WatchlistHeaderProps>(({ onCreatePress }) => {
 
 const getStyles = (theme: Theme) => StyleSheet.create({
   headerContainer: {
-    paddingTop: Platform.OS === 'ios' ? 10 : 24,
+    paddingTop: Platform.OS === 'ios' ? 10 : 12,
     paddingBottom: 8,
     paddingHorizontal: 20,
     backgroundColor: theme.header,

@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, StatusBar, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, StatusBar } from 'react-native';
 import { TopStock } from '../../types/stock';
 import { useTheme } from '../../context/ThemeContext';
 import { Theme } from '../../utils';
@@ -61,6 +61,7 @@ const HomeMainContent = memo<HomeMainContentProps>(({
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={false} // React Query handles its own loading states
@@ -102,10 +103,12 @@ const getStyles = (theme: Theme) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      minHeight: Dimensions.get('window').height,
     },
     scrollView: {
       flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 40, // Ensure content isn't cut off on smaller screens
     },
   });
 

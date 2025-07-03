@@ -26,15 +26,6 @@ const HomeStockList = memo<HomeStockListProps>(({ data, keyPrefix }) => {
     [keyPrefix]
   );
 
-  const getItemLayout = useCallback(
-    (data: ArrayLike<TopStock> | null | undefined, index: number) => ({
-      length: 120,
-      offset: 120 * index,
-      index,
-    }),
-    []
-  );
-
   return (
     <FlatList
       data={data}
@@ -45,7 +36,6 @@ const HomeStockList = memo<HomeStockListProps>(({ data, keyPrefix }) => {
       removeClippedSubviews={true}
       maxToRenderPerBatch={4}
       initialNumToRender={4}
-      getItemLayout={getItemLayout}
       contentContainerStyle={styles.listContainer}
     />
   );
@@ -54,6 +44,7 @@ const HomeStockList = memo<HomeStockListProps>(({ data, keyPrefix }) => {
 const getStyles = (_theme: Theme) =>
   StyleSheet.create({
     listContainer: {
+      flexGrow: 1,
       gap: 12,
     },
   });
