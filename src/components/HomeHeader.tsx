@@ -43,7 +43,6 @@ export const HomeHeader = () => {
     };
   }, [searchQuery]);
 
-  // Use search hook with debounced query
   const {
     data: searchResults = [],
     isLoading: searchLoading,
