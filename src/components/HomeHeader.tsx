@@ -1,21 +1,115 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { Searchbar } from './common/Searchbar';
-// import { useStockSearch } from '../hooks/useStock';
+import { useStockSearch } from '../hooks/useStock';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../context/ThemeContext';
 import { Theme } from '../utils';
+import { SearchResults } from './SearchResults';
+import { StockSearch } from '../types/stock';
+import { useNavigation } from '@react-navigation/native';
 
 export const HomeHeader = () => {
+  const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { theme, mode, toggleTheme } = useTheme();
   const styles = getStyles(theme);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300) as any;
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Use search hook with debounced query
+  const {
+    data: searchResults = [],
+    isLoading: searchLoading,
+    error: searchError,
+  } = useStockSearch(debouncedQuery || '');
+
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+    setShowResults(true);
+  };
+
+  // Handle search input blur
+  const handleSearchBlur = () => {
+    setIsSearchFocused(false);
+    // Only hide results if search is not focused and there's no query
+    // This prevents the dropdown from closing when tapping on results
+    setTimeout(() => {
+      if (!isSearchFocused) {
+        setShowResults(false);
+      }
+    }, 200);
+  };
+
+  // Handle search result selection
+  const handleSelectStock = (stock: StockSearch) => {
+    // Validate stock object
+    if (!stock || !stock.symbol || typeof stock.symbol !== 'string' || stock.symbol.trim() === '') {
+      console.error('Invalid stock object or symbol:', stock);
+      return;
+    }
+    
+    const ticker = stock.symbol.trim();
+    
+    try {
+      // Navigate immediately
+      navigation.navigate('Product', { ticker: ticker });
+      
+      // Clear search state after navigation
+      setSearchQuery('');
+      setShowResults(false);
+      setIsSearchFocused(false);
+      Keyboard.dismiss();
+      
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  // Handle search input change
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length === 0) {
+      setShowResults(false);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  // Handle clearing search
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setShowResults(false);
+    setIsSearchFocused(false);
+  };
+
   return (
     <View
       style={[
@@ -41,12 +135,45 @@ export const HomeHeader = () => {
             />
             <Searchbar
               searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              placeholder="Search..."
+              setSearchQuery={handleSearchChange}
+              placeholder="Search stocks..."
               placeholderTextColor={theme.subtext}
               style={[styles.searchInput, { color: theme.text }]}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              onSubmitEditing={() => {
+                if (searchQuery.trim()) {
+                  try {
+                    navigation.navigate('Product', { ticker: searchQuery.trim().toUpperCase() });
+                    setSearchQuery('');
+                    setShowResults(false);
+                    setIsSearchFocused(false);
+                  } catch (error) {
+                    console.error('Direct search navigation failed:', error);
+                  }
+                }
+              }}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClearSearch}
+                style={styles.clearButton}
+              >
+                <Icon name="close-circle" size={18} color={theme.subtext} />
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Search Results */}
+          <SearchResults
+            results={searchResults}
+            isLoading={searchLoading}
+            error={searchError}
+            onSelectStock={handleSelectStock}
+            isVisible={
+              showResults && (debouncedQuery.length > 0 || searchLoading)
+            }
+          />
         </View>
 
         {/* Theme Toggle Button */}
@@ -66,11 +193,12 @@ const getStyles = (theme: Theme) =>
   StyleSheet.create({
     header: {
       paddingHorizontal: 20,
-      paddingTop: Platform.OS === 'ios' ? 10 : 10,
+      paddingTop: Platform.OS === 'ios' ? 10 : 24,
       paddingBottom: 6,
       backgroundColor: theme.header,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
+      zIndex: 999,
     },
     headerRow: {
       flexDirection: 'row',
@@ -97,6 +225,9 @@ const getStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.border,
       borderRadius: 8,
+      position: 'relative',
+      zIndex: 1001,
+      overflow: 'visible',
     },
     searchBox: {
       flexDirection: 'row',
@@ -115,6 +246,10 @@ const getStyles = (theme: Theme) =>
       fontSize: theme.font.size.md,
       padding: 0,
       color: theme.text,
+    },
+    clearButton: {
+      marginLeft: 8,
+      padding: 2,
     },
     loadingText: {
       marginTop: 4,

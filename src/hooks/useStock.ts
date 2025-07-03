@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { config } from '../utils/config';
-import { StockOverview, TopStock } from '../types/stock';
+import { StockOverview, TopStock, StockSearch } from '../types/stock';
 import {
   getStaleTimeForTimeSeries,
   getApiParamsForTimeSeries,
@@ -117,5 +117,58 @@ export const useGetTopGainersLosers = (type: 'gainers' | 'losers') => {
     queryKey: ['topGainersLosers', type],
     queryFn: () => fetchTopGainersLosers(type),
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
+};
+
+// Search stocks by symbol or company name
+export async function fetchStockSearch(query: string): Promise<StockSearch[]> {
+  if (!query.trim()) {
+    return [];
+  }
+
+  const url = new URL(config.BASE_URL);
+  url.searchParams.append('function', 'SYMBOL_SEARCH');
+  url.searchParams.append('keywords', query.trim());
+  url.searchParams.append('apikey', config.API_KEY);
+
+  const response = await axios.get(url.toString());
+  const data = response.data;
+
+  console.log('Search response:', data);
+
+  if (data['Error Message']) {
+    throw new Error(data['Error Message']);
+  }
+
+  if (data['Note']) {
+    throw new Error(
+      'API call frequency limit reached. Please try again later.',
+    );
+  }
+
+  const searchResults = data.bestMatches || [];
+
+  const stocks: StockSearch[] = searchResults.map((stock: any) => ({
+    symbol: stock['1. symbol'],
+    name: stock['2. name'],
+    type: stock['3. type'],
+    region: stock['4. region'],
+    marketOpen: stock['5. marketOpen'],
+    marketClose: stock['6. marketClose'],
+    timezone: stock['7. timezone'],
+    currency: stock['8. currency'],
+    matchScore: stock['9. matchScore'],
+  }));
+
+  return stocks;
+}
+
+export const useStockSearch = (query: string) => {
+  return useQuery({
+    queryKey: ['stockSearch', query],
+    queryFn: () => fetchStockSearch(query),
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
   });
 };

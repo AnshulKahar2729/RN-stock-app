@@ -17,6 +17,7 @@ import { EmptyStockGrid } from '../../components/EmptyStockGrid';
 import { HomeHeader } from '../../components/HomeHeader';
 import { useTheme } from '../../context/ThemeContext';
 import { Theme } from '../../utils';
+import { useNavigation } from '@react-navigation/native';
 
 const getStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -135,9 +136,10 @@ const getStyles = (theme: Theme) =>
     },
   });
 
-const HomeScreen = ({ navigation }: any) => {
+const HomeScreen = () => {
   const { theme, mode } = useTheme();
   const styles = getStyles(theme);
+  const navigation = useNavigation<any>();
 
   const {
     data: gainers = [],

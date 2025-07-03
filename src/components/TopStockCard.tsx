@@ -104,7 +104,7 @@ const TopStockCard: React.FC<TopStockCardProps> = memo(({ stock }) => {
   const cardBg =
     mode === 'dark' ? theme.card : isPositive ? '#f8fffa' : '#fff8f8';
 
-  console.log('stock', stock);
+  // console.log('stock', stock);
   return (
     <TouchableOpacity
       style={[

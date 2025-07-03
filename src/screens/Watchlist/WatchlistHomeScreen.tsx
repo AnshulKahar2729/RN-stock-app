@@ -86,8 +86,8 @@ const getStyles = (theme: Theme) => StyleSheet.create({
     backgroundColor: theme.background,
   },
   headerContainer: {
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 16,
+    paddingTop: Platform.OS === 'ios' ? 10 : 24,
+    paddingBottom: 8,
     paddingHorizontal: 20,
     backgroundColor: theme.header,
     borderBottomWidth: 1,
